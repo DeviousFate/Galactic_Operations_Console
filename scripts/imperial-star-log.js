@@ -3512,129 +3512,42 @@
         if (resultText) resultText.textContent = "Intelligence Database Incomplete";
     }
 
+    function getPlanetIntelModule() {
+        const planetIntelModule = globalThis.GalacticOperationsConsoleModules?.planetIntel;
+        if (!planetIntelModule) throw new Error(`${MODULE_ID} | Planet Intel module was not loaded.`);
+        return planetIntelModule;
+    }
+
+    function getPlanetIntelConfig() {
+        return { zoomMin: ZOOM_MIN, zoomMax: ZOOM_MAX, zoomStep: ZOOM_STEP };
+    }
+
     function closePlanetPopup(dashboard) {
-        dashboard.querySelector("#isl-planet-popup")?.classList.add("hidden");
+        return getPlanetIntelModule().closePopup(dashboard);
     }
 
     function openPlanetPopup(dashboard) {
-        const popup = dashboard.querySelector("#isl-planet-popup");
-        popup?.classList.remove("hidden");
-        requestAnimationFrame(() => layoutPlanetPopup(dashboard));
+        return getPlanetIntelModule().openPopup(dashboard, getPlanetIntelConfig());
     }
 
     function beginPlanetPopupDrag(dashboard, event) {
-        if (event.button !== 0) return;
-        if (event.target.closest("button, input, output")) return;
-
-        const popup = dashboard.querySelector("#isl-planet-popup");
-        if (!popup || popup.classList.contains("hidden")) return;
-
-        event.preventDefault();
-        popup.dataset.moved = "true";
-
-        const dashboardRect = dashboard.getBoundingClientRect();
-        const popupRect = popup.getBoundingClientRect();
-        const pointerOffsetX = event.clientX - popupRect.left;
-        const pointerOffsetY = event.clientY - popupRect.top;
-
-        setPlanetPopupPosition(dashboard, popupRect.left - dashboardRect.left, popupRect.top - dashboardRect.top);
-
-        const movePopup = (moveEvent) => {
-            const nextLeft = moveEvent.clientX - dashboardRect.left - pointerOffsetX;
-            const nextTop = moveEvent.clientY - dashboardRect.top - pointerOffsetY;
-            setPlanetPopupPosition(dashboard, nextLeft, nextTop);
-        };
-
-        const stopDragging = () => {
-            window.removeEventListener("pointermove", movePopup);
-            window.removeEventListener("pointerup", stopDragging);
-            window.removeEventListener("pointercancel", stopDragging);
-        };
-
-        window.addEventListener("pointermove", movePopup);
-        window.addEventListener("pointerup", stopDragging);
-        window.addEventListener("pointercancel", stopDragging);
+        return getPlanetIntelModule().beginPopupDrag(dashboard, event);
     }
 
     function layoutPlanetPopup(dashboard) {
-        const popup = dashboard.querySelector("#isl-planet-popup");
-        if (!popup || popup.classList.contains("hidden")) return;
-
-        if (popup.dataset.moved === "true") {
-            const left = Number.parseFloat(popup.style.left) || 0;
-            const top = Number.parseFloat(popup.style.top) || 0;
-            setPlanetPopupPosition(dashboard, left, top);
-            return;
-        }
-
-        positionPlanetPopupDefault(dashboard);
-    }
-
-    function positionPlanetPopupDefault(dashboard) {
-        const popup = dashboard.querySelector("#isl-planet-popup");
-        const panel = dashboard.querySelector(".isl-panel");
-        if (!popup) return;
-
-        const dashboardRect = dashboard.getBoundingClientRect();
-        const panelRect = panel?.getBoundingClientRect();
-        const panelWidth = panelRect ? Math.max(0, panelRect.right - dashboardRect.left) : 0;
-        const mapWidth = Math.max(0, dashboardRect.width - panelWidth);
-        const left = panelWidth + ((mapWidth - popup.offsetWidth) / 2);
-        const top = (dashboardRect.height - popup.offsetHeight) / 2;
-
-        setPlanetPopupPosition(dashboard, left, top);
+        return getPlanetIntelModule().layoutPopup(dashboard);
     }
 
     function setPlanetPopupPosition(dashboard, left, top) {
-        const popup = dashboard.querySelector("#isl-planet-popup");
-        if (!popup) return;
-
-        const dashboardRect = dashboard.getBoundingClientRect();
-        const maxLeft = Math.max(0, dashboardRect.width - popup.offsetWidth);
-        const maxTop = Math.max(0, dashboardRect.height - popup.offsetHeight);
-        const nextLeft = Math.min(maxLeft, Math.max(0, left));
-        const nextTop = Math.min(maxTop, Math.max(0, top));
-
-        popup.style.left = `${nextLeft}px`;
-        popup.style.top = `${nextTop}px`;
+        return getPlanetIntelModule().setPopupPosition(dashboard, left, top);
     }
 
     function zoomPlanetAtCursor(dashboard, event) {
-        const image = dashboard.querySelector("#isl-planet-image");
-        if (!image || image.classList.contains("hidden")) return;
-
-        event.preventDefault();
-
-        const currentZoom = Number(image.dataset.zoom || ZOOM_MIN);
-        const delta = event.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP;
-        setPlanetZoom(dashboard, currentZoom + delta, event);
+        return getPlanetIntelModule().zoomAtCursor(dashboard, event, getPlanetIntelConfig());
     }
 
     function setPlanetZoom(dashboard, value, anchorEvent = null) {
-        const zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Number(value) || ZOOM_MIN));
-        const image = dashboard.querySelector("#isl-planet-image");
-        const popupBody = dashboard.querySelector(".isl-planet-popup-body");
-        const readout = dashboard.querySelector("#isl-planet-zoom-value");
-        const viewportRect = popupBody?.getBoundingClientRect();
-        const pointerX = anchorEvent && viewportRect ? anchorEvent.clientX - viewportRect.left : 0;
-        const pointerY = anchorEvent && viewportRect ? anchorEvent.clientY - viewportRect.top : 0;
-        const relativeX = anchorEvent && image ? (popupBody.scrollLeft + pointerX) / Math.max(image.offsetWidth, 1) : 0;
-        const relativeY = anchorEvent && image ? (popupBody.scrollTop + pointerY) / Math.max(image.offsetHeight, 1) : 0;
-
-        if (image) {
-            image.dataset.zoom = String(zoom);
-            image.style.width = `${zoom}%`;
-            image.style.height = `${zoom}%`;
-        }
-        if (readout) readout.textContent = `${zoom}%`;
-
-        if (anchorEvent && popupBody && image) {
-            popupBody.scrollLeft = (relativeX * image.offsetWidth) - pointerX;
-            popupBody.scrollTop = (relativeY * image.offsetHeight) - pointerY;
-        } else if (popupBody) {
-            popupBody.scrollLeft = 0;
-            popupBody.scrollTop = 0;
-        }
+        return getPlanetIntelModule().setZoom(dashboard, value, anchorEvent, getPlanetIntelConfig());
     }
 
     async function playCodexStartup(dashboard) {
@@ -3666,75 +3579,42 @@
         });
     }
 
+    function getMissionControlModule() {
+        const missionControlModule = globalThis.GalacticOperationsConsoleModules?.missionControl;
+        if (!missionControlModule) throw new Error(`${MODULE_ID} | Mission-control module was not loaded.`);
+        return missionControlModule;
+    }
+
+    function getMissionControlConfig() {
+        return {
+            moduleId: MODULE_ID,
+            missionBriefSettingKey: MISSION_BRIEF_SETTING_KEY,
+            legacyOpsSettingKey: LEGACY_OPS_SETTING_KEY,
+            socketName: SOCKET_NAME,
+            defaultMissionBrief: DEFAULT_MISSION_BRIEF,
+            updateMissionStaticText,
+            setMissionStatus
+        };
+    }
+
     function getMissionBrief() {
-        let missionBrief = DEFAULT_MISSION_BRIEF;
-
-        try {
-            const savedBrief = game.settings.get(MODULE_ID, MISSION_BRIEF_SETTING_KEY);
-            if (typeof savedBrief === "string") missionBrief = savedBrief;
-        } catch (error) {
-            missionBrief = DEFAULT_MISSION_BRIEF;
-        }
-
-        if (missionBrief === DEFAULT_MISSION_BRIEF) {
-            try {
-                const legacyData = game.settings.get(MODULE_ID, LEGACY_OPS_SETTING_KEY);
-                if (typeof legacyData?.mission === "string" && legacyData.mission.trim()) {
-                    missionBrief = legacyData.mission;
-                }
-            } catch (error) {
-                // Legacy OPS data may not exist in worlds that never used the editable OPS build.
-            }
-        }
-
-        return missionBrief;
+        return getMissionControlModule().getMissionBrief(getMissionControlConfig());
     }
 
     function applyMissionBriefToDashboard(dashboard, missionBrief) {
-        const value = String(missionBrief ?? DEFAULT_MISSION_BRIEF);
-
-        updateMissionStaticText(dashboard, value);
-        dashboard.querySelectorAll("[data-mission-field]").forEach((field) => {
-            field.value = value;
-        });
+        return getMissionControlModule().applyToDashboard(dashboard, missionBrief, getMissionControlConfig());
     }
 
     function applyMissionBriefToOpenDashboards(missionBrief) {
-        document.querySelectorAll(".imperial-star-log-app .isl-dashboard").forEach((dashboard) => {
-            applyMissionBriefToDashboard(dashboard, missionBrief);
-            setMissionStatus(dashboard, "Confidential mission data synchronized.", "");
-        });
+        return getMissionControlModule().applyToOpenDashboards(missionBrief, getMissionControlConfig());
     }
 
     async function saveMissionBriefFromDashboard(dashboard) {
-        if (!game.user?.isGM) {
-            setMissionStatus(dashboard, "GM clearance required to save mission orders.", "error");
-            return;
-        }
-
-        const field = dashboard.querySelector("[data-mission-field]");
-        const missionBrief = field?.value ?? DEFAULT_MISSION_BRIEF;
-
-        try {
-            await persistMissionBrief(missionBrief);
-            setMissionStatus(dashboard, "Mission orders saved.", "");
-        } catch (error) {
-            console.error(`${MODULE_ID} | Failed to save mission brief`, error);
-            setMissionStatus(dashboard, "Mission orders save failed.", "error");
-        }
+        return getMissionControlModule().saveFromDashboard(dashboard, getMissionControlConfig());
     }
 
     async function persistMissionBrief(missionBrief) {
-        if (!game.user?.isGM) return;
-
-        const value = String(missionBrief ?? DEFAULT_MISSION_BRIEF);
-        await game.settings.set(MODULE_ID, MISSION_BRIEF_SETTING_KEY, value);
-        applyMissionBriefToOpenDashboards(value);
-
-        game.socket?.emit(SOCKET_NAME, {
-            type: "missionBriefSaved",
-            missionBrief: value
-        });
+        return getMissionControlModule().persistMissionBrief(missionBrief, getMissionControlConfig());
     }
 
     function handleSocketMessage(message) {

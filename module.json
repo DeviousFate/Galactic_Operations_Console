@@ -21,6 +21,8 @@
     "scripts/modules/map-ui.js",
     "scripts/modules/state-sync.js",
     "scripts/modules/navdata.js",
+    "scripts/modules/planet-intel.js",
+    "scripts/modules/mission-control.js",
     "scripts/imperial-star-log.js"
   ],
   "styles": [
