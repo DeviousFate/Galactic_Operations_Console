@@ -2692,7 +2692,9 @@
         dashboard.querySelector("[data-action='close-planet-popup']")?.addEventListener("click", () => closePlanetPopup(dashboard));
         dashboard.querySelector("[data-action='close-transmission-popup']")?.addEventListener("click", () => closeTransmissionPopup(dashboard));
         dashboard.querySelector("[data-action='close-clearance-popup']")?.addEventListener("click", () => closeNavigationClearancePopup(dashboard));
-        dashboard.querySelector("[data-action='close-navigation-restriction-popup']")?.addEventListener("click", () => closeNavigationRestrictionPopup(dashboard));
+        dashboard.querySelectorAll("[data-action='close-navigation-restriction-popup']").forEach((button) => {
+            button.addEventListener("click", () => closeNavigationRestrictionPopup(dashboard));
+        });
         dashboard.querySelectorAll("[data-action='trigger-warning-grade']").forEach((button) => {
             button.addEventListener("click", () => triggerManualWarningGrade(dashboard, button.dataset.warningGrade));
         });
