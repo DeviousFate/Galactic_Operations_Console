@@ -2741,99 +2741,16 @@
     }
 
     function calculateHyperspaceRoute(dashboard, origin, destination) {
-        const transitMode = readAstroNavTransitMode(dashboard);
-        const isGridToGridRoute = Boolean(origin.coordinate && destination.coordinate);
-        const directGridRoute = isGridToGridRoute
-            ? buildAstroNavGridRoute(origin.coordinate, destination.coordinate)
-            : [];
-        const gridRoute = isGridToGridRoute
-            ? buildAstroNavGridRoute(origin.coordinate, destination.coordinate, {
-                avoidRestricted: transitMode === "avoid-restricted"
-            })
-            : [];
-
-        if (isGridToGridRoute && !gridRoute.length) {
-            return {
-                error: "No unrestricted hyperspace corridor is available for this route."
-            };
-        }
-
-        const restrictionAccess = getDashboardRestrictionTierAccess(dashboard);
-        const authorizedGrids = getNavigationClearanceGrids();
-        const unauthorizedDirectTransit = transitMode === "direct-transit"
-            ? getUnauthorizedAstroNavRestrictedTransits(directGridRoute, restrictionAccess, {
-                authorizedGrids
-            })
-            : [];
-        if (unauthorizedDirectTransit.length) {
-            return {
-                error: formatAstroNavDirectTransitDenial(unauthorizedDirectTransit[0])
-            };
-        }
-
-        const gridSegments = gridRoute.length > 1
-            ? buildAstroNavGridSegments(gridRoute, origin, destination)
-            : [];
-        const sameGrid = Boolean(origin.grid && origin.grid === destination.grid);
-        const baseHours = sameGrid
-            ? 0
-            : gridSegments.length
-            ? gridSegments.reduce((total, segment) => total + segment.hours, 0)
-            : HYPERSPACE_REGION_TRAVEL_HOURS[origin.region]?.[destination.region] ?? 0;
-        const directMajorHyperlaneRoute = findMajorHyperlaneRoute(origin, destination);
-        const adjacentMajorHyperlaneRoute = findAdjacentMajorHyperlaneRoute(gridRoute, origin, destination, {
-            avoidRestricted: transitMode === "avoid-restricted"
-        });
-        const availableMajorHyperlaneRoute = [directMajorHyperlaneRoute, adjacentMajorHyperlaneRoute]
-            .filter((route) => isAstroNavMajorHyperlaneRouteAvailable(
-                route,
-                transitMode,
-                origin,
-                destination,
-                restrictionAccess,
-                authorizedGrids
-            ))
-            .sort((left, right) => left.hours - right.hours)[0] || null;
-        const usesMajorHyperlane = Boolean(availableMajorHyperlaneRoute && (baseHours <= 0 || availableMajorHyperlaneRoute.hours < baseHours));
-        const travelHours = usesMajorHyperlane ? availableMajorHyperlaneRoute.hours : baseHours;
-        const hyperdriveClass = readAstroNavNumber(dashboard, "hyperdriveClass", 1, { min: 0.1 });
-        const hours = travelHours * hyperdriveClass;
-        const realspaceLeg = readAstroNavRealspaceLeg(dashboard);
-        const days = hours / 24;
-        const totalMinHours = hours + realspaceLeg.minHours;
-        const totalMaxHours = hours + realspaceLeg.maxHours;
-        const hyperspaceFuelUnits = hours > 0 ? Math.max(1, Math.ceil(days)) : 0;
-        const realspaceFuelMin = realspaceLeg.minHours / 24;
-        const realspaceFuelMax = realspaceLeg.maxHours / 24;
-        const fuelUsedMin = hyperspaceFuelUnits + realspaceFuelMin;
-        const fuelUsedMax = hyperspaceFuelUnits + realspaceFuelMax;
-        const fuelRequiredMin = Math.ceil(fuelUsedMin);
-        const fuelRequiredMax = Math.ceil(fuelUsedMax);
-
-        return {
+        return getNavRoutingModule().calculateRoute({
             origin,
             destination,
-            transitMode,
-            gridRoute,
-            gridSegments,
-            baseHours,
-            travelHours,
-            availableMajorHyperlaneRoute,
-            majorHyperlaneRoute: usesMajorHyperlane ? availableMajorHyperlaneRoute : null,
-            hyperdriveClass,
-            realspaceLeg,
-            hyperspaceFuelUnits,
-            realspaceFuelMin,
-            realspaceFuelMax,
-            fuelUsedMin,
-            fuelUsedMax,
-            fuelRequiredMin,
-            fuelRequiredMax,
-            hours,
-            days,
-            totalMinHours,
-            totalMaxHours
-        };
+            transitMode: readAstroNavTransitMode(dashboard),
+            restrictionAccess: getDashboardRestrictionTierAccess(dashboard),
+            authorizedGrids: getNavigationClearanceGrids(),
+            hyperdriveClass: readAstroNavNumber(dashboard, "hyperdriveClass", 1, { min: 0.1 }),
+            realspaceLeg: readAstroNavRealspaceLeg(dashboard),
+            regionTravelHours: HYPERSPACE_REGION_TRAVEL_HOURS
+        }, getNavRoutingModuleConfig());
     }
 
     function getNavRoutingModule() {

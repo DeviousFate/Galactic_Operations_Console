@@ -102,6 +102,101 @@
             }
 
             return !getUnauthorizedRestrictedTransits(route.grids, access, { authorizedGrids }, config).length;
+        },
+
+        calculateRoute(input, config) {
+            const {
+                origin,
+                destination,
+                transitMode,
+                restrictionAccess,
+                authorizedGrids,
+                hyperdriveClass,
+                realspaceLeg,
+                regionTravelHours
+            } = input;
+            const isGridToGridRoute = Boolean(origin.coordinate && destination.coordinate);
+            const directGridRoute = isGridToGridRoute
+                ? buildGridRoute(origin.coordinate, destination.coordinate, {}, config)
+                : [];
+            const gridRoute = isGridToGridRoute
+                ? buildGridRoute(origin.coordinate, destination.coordinate, {
+                    avoidRestricted: transitMode === "avoid-restricted"
+                }, config)
+                : [];
+
+            if (isGridToGridRoute && !gridRoute.length) {
+                return { error: "No unrestricted hyperspace corridor is available for this route." };
+            }
+
+            const unauthorizedDirectTransit = transitMode === "direct-transit"
+                ? getUnauthorizedRestrictedTransits(directGridRoute, restrictionAccess, { authorizedGrids }, config)
+                : [];
+            if (unauthorizedDirectTransit.length) {
+                return { error: this.formatDirectTransitDenial(unauthorizedDirectTransit[0]) };
+            }
+
+            const gridSegments = gridRoute.length > 1
+                ? config.buildGridSegments(gridRoute, origin, destination)
+                : [];
+            const sameGrid = Boolean(origin.grid && origin.grid === destination.grid);
+            const baseHours = sameGrid
+                ? 0
+                : gridSegments.length
+                ? gridSegments.reduce((total, segment) => total + segment.hours, 0)
+                : regionTravelHours[origin.region]?.[destination.region] ?? 0;
+            const directMajorHyperlaneRoute = this.findDirect(origin, destination, config);
+            const adjacentMajorHyperlaneRoute = this.findAdjacent(gridRoute, origin, destination, {
+                avoidRestricted: transitMode === "avoid-restricted"
+            }, config);
+            const availableMajorHyperlaneRoute = [directMajorHyperlaneRoute, adjacentMajorHyperlaneRoute]
+                .filter((route) => this.isMajorRouteAvailable(
+                    route,
+                    transitMode,
+                    origin,
+                    destination,
+                    restrictionAccess,
+                    authorizedGrids,
+                    config
+                ))
+                .sort((left, right) => left.hours - right.hours)[0] || null;
+            const usesMajorHyperlane = Boolean(availableMajorHyperlaneRoute
+                && (baseHours <= 0 || availableMajorHyperlaneRoute.hours < baseHours));
+            const travelHours = usesMajorHyperlane ? availableMajorHyperlaneRoute.hours : baseHours;
+            const hours = travelHours * hyperdriveClass;
+            const days = hours / 24;
+            const totalMinHours = hours + realspaceLeg.minHours;
+            const totalMaxHours = hours + realspaceLeg.maxHours;
+            const hyperspaceFuelUnits = hours > 0 ? Math.max(1, Math.ceil(days)) : 0;
+            const realspaceFuelMin = realspaceLeg.minHours / 24;
+            const realspaceFuelMax = realspaceLeg.maxHours / 24;
+            const fuelUsedMin = hyperspaceFuelUnits + realspaceFuelMin;
+            const fuelUsedMax = hyperspaceFuelUnits + realspaceFuelMax;
+
+            return {
+                origin,
+                destination,
+                transitMode,
+                gridRoute,
+                gridSegments,
+                baseHours,
+                travelHours,
+                availableMajorHyperlaneRoute,
+                majorHyperlaneRoute: usesMajorHyperlane ? availableMajorHyperlaneRoute : null,
+                hyperdriveClass,
+                realspaceLeg,
+                hyperspaceFuelUnits,
+                realspaceFuelMin,
+                realspaceFuelMax,
+                fuelUsedMin,
+                fuelUsedMax,
+                fuelRequiredMin: Math.ceil(fuelUsedMin),
+                fuelRequiredMax: Math.ceil(fuelUsedMax),
+                hours,
+                days,
+                totalMinHours,
+                totalMaxHours
+            };
         }
     };
 
