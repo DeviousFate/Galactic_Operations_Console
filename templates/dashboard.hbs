@@ -113,10 +113,12 @@
                         Mission Theater: <span data-ship-location-readout>{{liveState.location}}</span><br>
                         Current Grid: <span data-ship-grid-readout>{{liveState.shipGrid}}</span><br>
                         Vessel Readiness: Sub-light engines nominal.<br>
+                        <div data-deception-controls{{#unless primaryVessel.hasDeceptionSystems}} class="hidden"{{/unless}}>
                         Deception Suite: <span data-stealth-readout>{{#if stealthSystemsEngaged}}Engaged{{else}}Standby{{/if}}</span><br>
                         <br>
                         <button class="isl-action-button isl-stealth-button{{#if stealthSystemsEngaged}} active{{/if}}" type="button" data-action="toggle-stealth" aria-pressed="{{stealthSystemsEngaged}}">Deception Systems</button>
                         <div class="isl-ship-status" data-stealth-status>{{#if stealthSystemsEngaged}}Deception systems engaged.{{else}}Deception systems standby.{{/if}}</div>
+                        </div>
                         <div class="isl-ship-status" data-live-state-status>Vessel telemetry synchronized.</div>
                         <br>
                         <b>/// LATERAL HULL PROJECTION ///</b><br>

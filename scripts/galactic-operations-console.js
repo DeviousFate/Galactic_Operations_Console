@@ -5156,6 +5156,8 @@
                 item.system?.equipmentCategory,
                 item.system?.subtype
             ].filter(Boolean).join(" ").toLowerCase();
+            if (type.includes("action") || /starship\s*actions?/.test(classification)) return;
+
             const quantity = Number(item.system?.quantity ?? item.system?.quantity?.value ?? 1);
             const entry = {
                 name: item.name,
@@ -5224,13 +5226,15 @@
             ["Sensors", getVesselStatValue(actor, ["system.attributes.sensors.value", "system.sensors.range", "system.sensors"])]
         ].filter(([, value]) => value);
 
+        const inventory = getVesselInventory(actor);
         return {
             configured: true,
             name: actor.name,
             image: actor.img ?? "",
             type: String(actor.type ?? "Vehicle"),
             stats,
-            inventory: getVesselInventory(actor)
+            inventory,
+            hasDeceptionSystems: inventory.stealth.length > 0
         };
     }
 
@@ -5239,6 +5243,7 @@
         const readout = dashboard.querySelector("[data-primary-vessel-readout]");
         if (!readout) return;
 
+        updateDeceptionSystemAvailability(dashboard, Boolean(vessel.hasDeceptionSystems));
         readout.replaceChildren();
         const summary = document.createElement("div");
         summary.className = "isl-vessel-summary";
@@ -5327,6 +5332,12 @@
             inventoryReadout.append(group);
         });
         readout.append(inventoryReadout);
+    }
+
+    function updateDeceptionSystemAvailability(dashboard, available) {
+        dashboard.querySelectorAll("[data-deception-controls]").forEach((controls) => {
+            controls.classList.toggle("hidden", !available);
+        });
     }
 
     async function setPrimaryVesselFromDashboard(dashboard, actorId) {
