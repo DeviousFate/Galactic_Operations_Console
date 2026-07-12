@@ -40,6 +40,31 @@ test("finds a weighted major hyperlane route", () => {
     assert.deepEqual(route.grids, ["A1", "B1", "C1"]);
 });
 
+test("includes approach and departure grids in a major hyperlane transit", () => {
+    const route = routing.findDirect({ name: "A" }, { name: "C" }, config);
+    const transitConfig = {
+        ...config,
+        calculateGridTransit: (from, to) => ({
+            hours: from.grid === to.grid ? 0 : 1,
+            grids: from.grid === to.grid ? [from.grid] : [from.grid, to.grid]
+        })
+    };
+    const transit = routing.buildMajorRouteTransit(route, {
+        name: "A",
+        grid: "A2",
+        coordinate: parseGrid("A2"),
+        region: "Core"
+    }, {
+        name: "C",
+        grid: "C2",
+        coordinate: parseGrid("C2"),
+        region: "Core"
+    }, {}, transitConfig);
+
+    assert.equal(transit.hours, 7);
+    assert.deepEqual(transit.grids, ["A2", "A1", "B1", "C1", "C2"]);
+});
+
 test("avoids a restricted grid when plotting an avoid-restricted route", () => {
     const route = routing.buildGridRoute(parseGrid("A1"), parseGrid("C1"), { avoidRestricted: true }, config);
     assert.equal(route.includes("B1"), false);

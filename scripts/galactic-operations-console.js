@@ -787,6 +787,10 @@
             return bestRoute;
         },
 
+        buildMajorRouteTransit(laneRoute, origin, destination, { avoidRestricted = false } = {}, config) {
+            return buildMajorRouteTransit(laneRoute, origin, destination, { avoidRestricted }, config);
+        },
+
         calculateGridTransit(origin, destination, { avoidRestricted = false } = {}, config) {
             if (!origin.coordinate || !destination.coordinate) return { hours: Infinity, grids: [] };
             if (origin.grid === destination.grid) return { hours: 0, grids: [origin.grid] };
@@ -874,7 +878,13 @@
                 : gridSegments.length
                 ? gridSegments.reduce((total, segment) => total + segment.hours, 0)
                 : regionTravelHours[origin.region]?.[destination.region] ?? 0;
-            const directMajorHyperlaneRoute = this.findDirect(origin, destination, config);
+            const directMajorHyperlaneRoute = this.buildMajorRouteTransit(
+                this.findDirect(origin, destination, config),
+                origin,
+                destination,
+                { avoidRestricted: transitMode === "avoid-restricted" },
+                config
+            );
             const adjacentMajorHyperlaneRoute = this.findAdjacent(gridRoute, origin, destination, {
                 avoidRestricted: transitMode === "avoid-restricted"
             }, config);
@@ -976,6 +986,27 @@
         };
         routeCache.set(cacheKey, result);
         return result;
+    }
+
+    function buildMajorRouteTransit(laneRoute, origin, destination, { avoidRestricted = false } = {}, config) {
+        if (!laneRoute?.legs?.length || !origin?.coordinate || !destination?.coordinate) return laneRoute;
+
+        const entryLeg = laneRoute.legs[0];
+        const exitLeg = laneRoute.legs.at(-1);
+        const entry = buildAccessTarget({ node: entryLeg.from, grid: entryLeg.fromGrid }, origin.region, config);
+        const exit = buildAccessTarget({ node: exitLeg.to, grid: exitLeg.toGrid }, destination.region, config);
+        const approach = config.calculateGridTransit(origin, entry, { avoidRestricted });
+        const departure = config.calculateGridTransit(exit, destination, { avoidRestricted });
+
+        if (!Number.isFinite(approach?.hours) || !Number.isFinite(departure?.hours)) return null;
+
+        return {
+            ...laneRoute,
+            hours: approach.hours + laneRoute.hours + departure.hours,
+            laneHours: laneRoute.hours,
+            access: { entryGrid: entry.grid, exitGrid: exit.grid },
+            grids: mergeGridPaths([approach.grids, laneRoute.grids, departure.grids], config)
+        };
     }
 
     function getConnections(config) {
