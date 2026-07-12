@@ -1,0 +1,1981 @@
+@font-face {
+    font-family: "Aurebesh AF Canon Tech";
+    src: url("../assets/fonts/AurebeshAF-CanonTech.otf") format("opentype");
+    font-display: block;
+}
+
+#isl-commlink-control.isl-commlink-control {
+    position: fixed;
+    left: 16px;
+    bottom: 208px;
+    z-index: 80;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 66px;
+    padding: 5px;
+    border: 1px solid rgba(245, 245, 245, 0.54);
+    border-radius: 4px;
+    background: rgba(5, 5, 5, 0.9);
+    box-shadow: 0 0 14px rgba(188, 30, 34, 0.35), inset 0 0 14px rgba(255, 51, 51, 0.1);
+    pointer-events: auto;
+}
+
+#isl-commlink-control .isl-quick-access-button {
+    appearance: none;
+    position: relative;
+    width: 54px;
+    height: 54px;
+    padding: 4px;
+    border: 1px solid #8f9694;
+    border-radius: 3px;
+    background: #080b0b;
+    box-shadow: inset 0 0 9px rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+#isl-commlink-control .isl-quick-access-button img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    mix-blend-mode: screen;
+    pointer-events: none;
+}
+
+#isl-commlink-control .isl-commlink-alert-trigger {
+    display: grid;
+    place-items: center;
+    border-color: #bc1e22;
+    color: #ffb3b3;
+    font-size: 1.15rem;
+    box-shadow: 0 0 8px rgba(188, 30, 34, 0.42), inset 0 0 9px rgba(188, 30, 34, 0.14);
+}
+
+#isl-commlink-control .isl-isb-conf-trigger {
+    display: grid;
+    place-items: center;
+    border-color: #ffd24a;
+    color: #ffd24a;
+    font-size: 1.1rem;
+    box-shadow: 0 0 8px rgba(255, 210, 74, 0.34), inset 0 0 9px rgba(255, 210, 74, 0.13);
+}
+
+#isl-commlink-control.is-alerting .isl-commlink-alert-trigger {
+    border-color: #7cff9d;
+    color: #d9ffe3;
+    background: #164b26;
+    box-shadow: 0 0 10px #20b851, inset 0 0 12px rgba(175, 255, 199, 0.5);
+}
+
+#isl-commlink-control .isl-quick-access-button:hover,
+#isl-commlink-control .isl-quick-access-button:focus-visible {
+    border-color: #ffd24a;
+    background: #1b1510;
+    box-shadow: 0 0 10px rgba(255, 210, 74, 0.68), inset 0 0 9px rgba(255, 210, 74, 0.2);
+    outline: none;
+}
+
+#isl-commlink-control .isl-quick-access-button[data-quick-action="commlink"] {
+    border-color: #f5f5f5;
+    box-shadow: 0 0 8px rgba(245, 245, 245, 0.22), inset 0 0 9px rgba(255, 255, 255, 0.08);
+}
+
+#isl-commlink-control.is-alerting .isl-quick-access-button[data-quick-action="commlink"] {
+    border-color: #ffffff;
+    background: #20b851;
+    box-shadow: 0 0 10px #20b851, 0 0 22px rgba(32, 184, 81, 0.8), inset 0 0 14px rgba(175, 255, 199, 0.78);
+    animation: isl-commlink-alert-pulse 0.85s steps(2, end) infinite;
+}
+
+@keyframes isl-commlink-alert-pulse {
+    0%,
+    45% {
+        opacity: 1;
+        background: #31d566;
+        box-shadow: 0 0 12px #31d566, 0 0 26px rgba(49, 213, 102, 0.9), inset 0 0 16px rgba(202, 255, 216, 0.9);
+    }
+
+    46%,
+    100% {
+        opacity: 0.56;
+        background: #0b2d16;
+        box-shadow: 0 0 3px #20b851, inset 0 0 6px rgba(93, 255, 138, 0.35);
+    }
+}
+
+@media (max-height: 700px) {
+    #isl-commlink-control.isl-commlink-control {
+        bottom: 16px;
+        gap: 3px;
+        padding: 4px;
+    }
+
+    #isl-commlink-control .isl-quick-access-button {
+        width: 44px;
+        height: 44px;
+    }
+}
+
+.imperial-star-log-app .window-content {
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+    background: transparent;
+    overflow: hidden;
+}
+
+.imperial-star-log-app,
+.imperial-star-log-app * {
+    box-sizing: border-box;
+}
+
+.imperial-star-log-app .isl-dashboard {
+    position: relative;
+    height: 100%;
+    min-height: 0;
+    background-color: #050505;
+    background-image:
+        linear-gradient(rgba(255, 51, 51, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 51, 51, 0.08) 1px, transparent 1px),
+        radial-gradient(circle at 75% 45%, rgba(255, 51, 51, 0.18), transparent 38%),
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.08), transparent 42%);
+    background-size: 42px 42px, 42px 42px, cover, cover;
+    color: #ff3333;
+    display: flex;
+    font-family: "Courier New", Courier, monospace;
+    overflow: hidden;
+}
+
+.imperial-star-log-app .isl-panel {
+    flex: 0 0 clamp(320px, 36%, 540px);
+    width: clamp(320px, 36%, 540px);
+    min-height: 0;
+    height: 100%;
+    background: rgba(10, 10, 10, 0.9);
+    border-right: 3px solid #ff3333;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(12px, 2.2vw, 20px);
+    overflow-y: auto;
+    container-type: inline-size;
+}
+
+.imperial-star-log-app .isl-crest {
+    width: 100%;
+    min-height: clamp(78px, 16%, 120px);
+    border: 2px solid #ff3333;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    background: radial-gradient(circle, #330000 0%, #000000 100%);
+    text-align: center;
+}
+
+.imperial-star-log-app .isl-crest-aurebesh {
+    color: #ff4d4d;
+    font-family: "Aurebesh AF Canon Tech", monospace;
+    font-size: clamp(1.35rem, 2.6vw, 2.15rem);
+    letter-spacing: 0.08em;
+    line-height: 1.05;
+    text-shadow: 0 0 8px rgba(255, 51, 51, 0.65);
+}
+
+.imperial-star-log-app .isl-crest-basic {
+    margin-top: 8px;
+    color: #ffcccc;
+    font-size: 0.7rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.imperial-star-log-app .isl-tab-controls {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.imperial-star-log-app .isl-tab-button,
+.imperial-star-log-app .isl-action-button {
+    min-height: 34px;
+    background: #ff3333;
+    color: #050505;
+    border: 1px solid #ff3333;
+    padding: 7px 8px;
+    font-family: inherit;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.imperial-star-log-app .isl-tab-button {
+    background: rgba(255, 51, 51, 0.08);
+    color: #ffcccc;
+}
+
+.imperial-star-log-app .isl-tab-button.active {
+    background: #ff3333;
+    color: #050505;
+}
+
+.imperial-star-log-app .isl-confidential-tab {
+    border-color: #ffd24a;
+    color: #ffd24a;
+}
+
+.imperial-star-log-app .isl-confidential-tab.active {
+    background: #ffd24a;
+    border-color: #ffd24a;
+    color: #050505;
+}
+
+.imperial-star-log-app .isl-tab-button:focus-visible,
+.imperial-star-log-app .isl-action-button:focus-visible,
+.imperial-star-log-app .isl-location-input:focus-visible,
+.imperial-star-log-app .isl-planet-input:focus-visible {
+    outline: 2px solid #ffd24a;
+    outline-offset: 2px;
+}
+
+.imperial-star-log-app .isl-tab-panel {
+    display: none;
+}
+
+.imperial-star-log-app .isl-tab-panel.active {
+    display: block;
+}
+
+.imperial-star-log-app .isl-ship-tab-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.imperial-star-log-app .isl-ship-tab-panel {
+    display: none;
+}
+
+.imperial-star-log-app .isl-ship-tab-panel.active {
+    display: block;
+}
+
+.imperial-star-log-app .isl-widget {
+    border: 2px solid #ff3333;
+    background: rgba(255, 51, 51, 0.05);
+    margin-bottom: 16px;
+    padding: 15px;
+}
+
+.imperial-star-log-app .isl-widget:hover {
+    background: rgba(255, 51, 51, 0.15);
+    box-shadow: 0 0 15px rgba(255, 51, 51, 0.4);
+    cursor: crosshair;
+    transition: 0.3s ease-in-out;
+}
+
+.imperial-star-log-app .isl-widget-title {
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    border-bottom: 1px solid #ff3333;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.imperial-star-log-app .isl-data-text {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: #cccccc;
+}
+
+.imperial-star-log-app .isl-warning-text {
+    color: #ffd24a;
+}
+
+.imperial-star-log-app .isl-static-text {
+    min-height: 92px;
+    border: 1px solid rgba(255, 51, 51, 0.45);
+    background: rgba(0, 0, 0, 0.45);
+    color: #cccccc;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+
+.imperial-star-log-app .isl-confidential-widget {
+    border-color: #ffd24a;
+    background:
+        linear-gradient(135deg, rgba(255, 210, 74, 0.08), rgba(255, 51, 51, 0.04)),
+        rgba(0, 0, 0, 0.72);
+}
+
+.imperial-star-log-app .isl-confidential-widget .isl-widget-title {
+    border-bottom-color: #ffd24a;
+}
+
+.imperial-star-log-app .isl-collapsible-section > .isl-widget-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.imperial-star-log-app .isl-collapsible-section > .isl-widget-title::-webkit-details-marker {
+    display: none;
+}
+
+.imperial-star-log-app .isl-collapsible-section > .isl-widget-title::after {
+    content: "+";
+    flex: 0 0 auto;
+    color: #ffd24a;
+    font-size: 1rem;
+}
+
+.imperial-star-log-app .isl-collapsible-section[open] > .isl-widget-title::after {
+    content: "-";
+}
+
+.imperial-star-log-app .isl-collapsible-section:not([open]) > .isl-widget-title {
+    margin-bottom: 0;
+}
+
+.imperial-star-log-app .isl-collapsible-section > .isl-widget-title:focus-visible {
+    outline: 2px solid #ffd24a;
+    outline-offset: 2px;
+}
+
+.imperial-star-log-app .isl-confidential-block {
+    margin-top: 14px;
+    border: 1px solid rgba(255, 210, 74, 0.45);
+    background: rgba(0, 0, 0, 0.45);
+    padding: 10px;
+}
+
+.imperial-star-log-app .isl-confidential-line {
+    color: #ffcccc;
+    font-size: 0.86rem;
+    line-height: 1.5;
+}
+
+.imperial-star-log-app .isl-warning-grade-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+    margin: 12px 0;
+}
+
+.imperial-star-log-app .isl-warning-grade-button {
+    min-width: 0;
+    background: rgba(188, 30, 34, 0.15);
+    border-color: #bc1e22;
+    color: #ffd2d2;
+    font-size: 0.72rem;
+    padding-inline: 4px;
+}
+
+.imperial-star-log-app .isl-warning-grade-button:hover,
+.imperial-star-log-app .isl-warning-grade-button:focus-visible {
+    background: #bc1e22;
+    border-color: #ff7777;
+    color: #ffffff;
+}
+
+.imperial-star-log-app .isl-live-hail-log {
+    display: grid;
+    gap: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 210, 74, 0.45);
+    background: rgba(0, 0, 0, 0.45);
+    color: #ffcccc;
+    padding: 10px;
+    font-size: 0.84rem;
+    line-height: 1.45;
+}
+
+.imperial-star-log-app .isl-live-hail-entry {
+    border-left: 3px solid #bc1e22;
+    padding-left: 8px;
+}
+
+.imperial-star-log-app .isl-live-hail-meta {
+    color: #ffd24a;
+    font-size: 0.72rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-live-hail-message {
+    margin-top: 4px;
+    color: #ffcccc;
+    white-space: pre-wrap;
+}
+
+.imperial-star-log-app .isl-restriction-tier-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.imperial-star-log-app .isl-restriction-tier {
+    border: 1px solid rgba(255, 51, 51, 0.65);
+    background: rgba(0, 0, 0, 0.45);
+    padding: 10px;
+}
+
+.imperial-star-log-app .isl-tier-access-enabled {
+    border-color: rgba(255, 210, 74, 0.8);
+    box-shadow: inset 3px 0 0 #ffd24a;
+}
+
+.imperial-star-log-app .isl-tier-access-denied {
+    box-shadow: inset 3px 0 0 #ff3333;
+}
+
+.imperial-star-log-app .isl-tier-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.imperial-star-log-app .isl-tier-kicker {
+    color: #ffd24a;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.imperial-star-log-app .isl-tier-title {
+    color: #ffffff;
+    font-size: 0.92rem;
+    font-weight: bold;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-tier-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    color: #ffcccc;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-tier-toggle input {
+    accent-color: #ffd24a;
+}
+
+.imperial-star-log-app .isl-tier-meta,
+.imperial-star-log-app .isl-tier-sitrep,
+.imperial-star-log-app .isl-tier-worlds {
+    margin-top: 8px;
+    color: #ffcccc;
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+.imperial-star-log-app .isl-tier-meta {
+    color: #ffd24a;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-tier-worlds {
+    display: grid;
+    gap: 5px;
+}
+
+.imperial-star-log-app .isl-tier-worlds b {
+    color: #ffffff;
+}
+
+.imperial-star-log-app .isl-clearance-denied {
+    border-color: #ff3333;
+}
+
+.imperial-star-log-app .isl-clearance-stamp {
+    display: inline-block;
+    border: 2px solid #ff3333;
+    color: #ff7777;
+    margin-bottom: 12px;
+    padding: 6px 10px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-aurebesh {
+    color: #ff4d4d;
+    font-family: "Aurebesh AF Canon Tech", monospace;
+    font-size: 1.1rem;
+    letter-spacing: 0.12em;
+    line-height: 1.25;
+    opacity: 0.85;
+    text-shadow: 0 0 7px rgba(255, 51, 51, 0.55);
+}
+
+.imperial-star-log-app .isl-mission-form {
+    margin: 0;
+}
+
+.imperial-star-log-app .isl-mission-textarea {
+    width: 100%;
+    min-height: 92px;
+    resize: vertical;
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid rgba(255, 51, 51, 0.8);
+    color: #cccccc;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.imperial-star-log-app .isl-mission-textarea:focus-visible {
+    outline: 2px solid #ffd24a;
+    outline-offset: 2px;
+}
+
+.imperial-star-log-app .isl-form-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.imperial-star-log-app .isl-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0;
+    color: #ffcccc;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-toggle-row input {
+    accent-color: #ff3333;
+}
+
+.imperial-star-log-app .isl-calibration-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.imperial-star-log-app .isl-calibration-value {
+    display: grid;
+    gap: 4px;
+    color: #ffcccc;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-calibration-input {
+    width: 100%;
+    min-width: 0;
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid rgba(255, 51, 51, 0.8);
+    color: #ffffff;
+    padding: 7px 8px;
+    font-family: inherit;
+    font-size: 0.85rem;
+}
+
+.imperial-star-log-app .isl-calibration-input[readonly],
+.imperial-star-log-app .isl-calibration-input:disabled {
+    color: #ffd24a;
+    background: rgba(255, 210, 74, 0.08);
+    cursor: default;
+}
+
+.imperial-star-log-app .isl-calibration-input:focus-visible {
+    outline: 2px solid #ffd24a;
+    outline-offset: 2px;
+}
+
+.imperial-star-log-app .isl-secondary-button {
+    background: rgba(255, 51, 51, 0.08);
+    color: #ffcccc;
+}
+
+.imperial-star-log-app .isl-stealth-button.active {
+    background: #ffd24a;
+    border-color: #ffd24a;
+    color: #050505;
+}
+
+.imperial-star-log-app .isl-ship-status {
+    min-height: 20px;
+    margin: 8px 0 0;
+    color: #ffd24a;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-ship-status[data-state="error"] {
+    color: #ff7777;
+}
+
+.imperial-star-log-app .isl-ship-status[data-state="dirty"] {
+    color: #ffffff;
+}
+
+.imperial-star-log-app .isl-astronav-form {
+    display: grid;
+    gap: 10px;
+}
+
+.imperial-star-log-app .isl-astronav-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+}
+
+.imperial-star-log-app .isl-astronav-field {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+    color: #ffd24a;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-astronav-field > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.imperial-star-log-app .isl-astronav-field-wide {
+    grid-column: 1 / -1;
+}
+
+.imperial-star-log-app .isl-astronav-input {
+    width: 100%;
+    min-height: 34px;
+    border: 1px solid rgba(255, 51, 51, 0.65);
+    background: rgba(0, 0, 0, 0.55);
+    color: #ffcccc;
+    padding: 7px 8px;
+    font-family: inherit;
+    font-size: 0.88rem;
+}
+
+.imperial-star-log-app .isl-astronav-form .isl-form-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    margin-bottom: 0;
+}
+
+.imperial-star-log-app .isl-astronav-form .isl-form-actions .isl-action-button {
+    width: 100%;
+    min-width: 0;
+}
+
+@container (min-width: 440px) {
+    .imperial-star-log-app .isl-astronav-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .imperial-star-log-app .isl-astronav-form .isl-form-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.imperial-star-log-app .isl-astronav-input:focus-visible {
+    outline: 2px solid #ffd24a;
+    outline-offset: 2px;
+}
+
+.imperial-star-log-app .isl-astronav-result {
+    margin-top: 12px;
+    border: 1px solid rgba(255, 51, 51, 0.65);
+    background: rgba(0, 0, 0, 0.35);
+    padding: 10px;
+}
+
+.imperial-star-log-app .isl-form-status {
+    min-height: 20px;
+    color: #ffd24a;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-form-status[data-state="error"] {
+    color: #ff7777;
+}
+
+.imperial-star-log-app .isl-form-status[data-state="dirty"] {
+    color: #ffffff;
+}
+
+.imperial-star-log-app .isl-location-form,
+.imperial-star-log-app .isl-planet-form {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.imperial-star-log-app .isl-location-input,
+.imperial-star-log-app .isl-planet-input {
+    width: 100%;
+    min-width: 0;
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid #ff3333;
+    color: #ffffff;
+    padding: 8px 10px;
+    font-family: inherit;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-location-input::placeholder,
+.imperial-star-log-app .isl-planet-input::placeholder {
+    color: #997777;
+}
+
+.imperial-star-log-app .isl-location-status,
+.imperial-star-log-app .isl-planet-result-text {
+    min-height: 20px;
+    margin: 8px 0 12px;
+    color: #ffd24a;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-location-status[data-state="error"] {
+    color: #ff7777;
+}
+
+.imperial-star-log-app .isl-location-status[data-state="dirty"] {
+    color: #ffffff;
+}
+
+.imperial-star-log-app .isl-planet-fallback {
+    color: #ffffff;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    line-height: 1.35;
+}
+
+.imperial-star-log-app .hidden {
+    display: none !important;
+}
+
+.imperial-star-log-app .isl-map-overlay {
+    flex: 1 1 auto;
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    background: #050505;
+    overflow: hidden;
+}
+
+.imperial-star-log-app .isl-map-overlay::before {
+    content: none;
+}
+
+.imperial-star-log-app .isl-map-viewport {
+    position: absolute;
+    inset: 0;
+    display: block;
+    background: #050505;
+    overflow: auto;
+}
+
+.imperial-star-log-app .isl-map-stage {
+    position: relative;
+    flex: 0 0 auto;
+    height: var(--isl-map-focus-zoom, 100%);
+    aspect-ratio: 1 / 1;
+    min-width: min(100%, 420px);
+    margin: 0 auto;
+    background: #050505;
+    cursor: grab;
+    user-select: none;
+}
+
+.imperial-star-log-app .isl-map-stage.isl-map-panning {
+    cursor: grabbing;
+}
+
+.imperial-star-log-app .isl-static-map {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.imperial-star-log-app .isl-grid-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.imperial-star-log-app .isl-route-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.imperial-star-log-app .isl-route-trace {
+    fill: none;
+    stroke: #40e8ff;
+    stroke-width: 2px;
+    stroke-dasharray: 5 3;
+    filter: drop-shadow(0 0 4px rgba(64, 232, 255, 0.95));
+    vector-effect: non-scaling-stroke;
+}
+
+.imperial-star-log-app .isl-grid-edit-layer {
+    position: absolute;
+    z-index: 3;
+    display: none;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 0, 0, 0.8),
+        0 0 16px rgba(255, 0, 0, 0.35);
+    pointer-events: none;
+}
+
+.imperial-star-log-app .isl-grid-alignment-unlocked .isl-grid-edit-layer {
+    display: block;
+    pointer-events: auto;
+}
+
+.imperial-star-log-app .isl-grid-edit-surface,
+.imperial-star-log-app .isl-grid-resize-handle {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    font: inherit;
+}
+
+.imperial-star-log-app .isl-grid-edit-surface {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 0, 0, 0.04);
+    cursor: move;
+}
+
+.imperial-star-log-app .isl-grid-resize-handle {
+    position: absolute;
+    z-index: 1;
+    width: 14px;
+    height: 14px;
+    border: 1px solid #ffffff;
+    background: #ff0000;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+}
+
+.imperial-star-log-app .isl-grid-edit-surface:focus-visible,
+.imperial-star-log-app .isl-grid-resize-handle:focus-visible {
+    outline: 2px solid #ffd24a;
+    outline-offset: 2px;
+}
+
+.imperial-star-log-app .isl-grid-resize-n {
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    cursor: ns-resize;
+}
+
+.imperial-star-log-app .isl-grid-resize-ne {
+    top: 0;
+    right: 0;
+    transform: translate(50%, -50%);
+    cursor: nesw-resize;
+}
+
+.imperial-star-log-app .isl-grid-resize-e {
+    top: 50%;
+    right: 0;
+    transform: translate(50%, -50%);
+    cursor: ew-resize;
+}
+
+.imperial-star-log-app .isl-grid-resize-se {
+    right: 0;
+    bottom: 0;
+    transform: translate(50%, 50%);
+    cursor: nwse-resize;
+}
+
+.imperial-star-log-app .isl-grid-resize-s {
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    cursor: ns-resize;
+}
+
+.imperial-star-log-app .isl-grid-resize-sw {
+    bottom: 0;
+    left: 0;
+    transform: translate(-50%, 50%);
+    cursor: nesw-resize;
+}
+
+.imperial-star-log-app .isl-grid-resize-w {
+    top: 50%;
+    left: 0;
+    transform: translate(-50%, -50%);
+    cursor: ew-resize;
+}
+
+.imperial-star-log-app .isl-grid-resize-nw {
+    top: 0;
+    left: 0;
+    transform: translate(-50%, -50%);
+    cursor: nwse-resize;
+}
+
+.imperial-star-log-app .isl-grid-line {
+    stroke: rgba(255, 51, 51, 0.28);
+    stroke-width: 1px;
+    vector-effect: non-scaling-stroke;
+}
+
+.imperial-star-log-app .isl-grid-major-line {
+    stroke: rgba(255, 210, 74, 0.32);
+}
+
+.imperial-star-log-app .isl-grid-alignment-unlocked .isl-grid-line {
+    stroke: rgba(255, 0, 0, 0.96);
+    stroke-width: 2px;
+}
+
+.imperial-star-log-app .isl-grid-alignment-unlocked .isl-grid-major-line {
+    stroke: #ff0000;
+    stroke-width: 3px;
+}
+
+.imperial-star-log-app .isl-restricted-dot {
+    fill: #BC1E22;
+    stroke: rgba(255, 170, 170, 0.9);
+    stroke-width: 1.25px;
+    filter: drop-shadow(0 0 3px rgba(188, 30, 34, 0.9));
+    vector-effect: non-scaling-stroke;
+}
+
+.imperial-star-log-app .isl-stronghold-pulse {
+    fill: none;
+    stroke: rgba(188, 30, 34, 0.78);
+    stroke-width: 1.5px;
+    filter: drop-shadow(0 0 5px rgba(188, 30, 34, 0.8));
+    transform-box: fill-box;
+    transform-origin: center;
+    vector-effect: non-scaling-stroke;
+}
+
+.imperial-star-log-app .isl-stronghold-pulse-primary {
+    animation: isl-stronghold-control-pulse 3.2s ease-out infinite;
+}
+
+.imperial-star-log-app .isl-stronghold-pulse-secondary {
+    animation: isl-stronghold-control-pulse 3.2s ease-out 1.6s infinite;
+}
+
+.imperial-star-log-app .isl-stronghold-diamond {
+    fill: rgba(52, 0, 0, 0.58);
+    stroke: #BC1E22;
+    vector-effect: non-scaling-stroke;
+}
+
+.imperial-star-log-app .isl-stronghold-diamond-outer {
+    stroke-width: 2px;
+    filter: drop-shadow(0 0 4px rgba(188, 30, 34, 0.95));
+}
+
+.imperial-star-log-app .isl-stronghold-diamond-inner {
+    stroke: rgba(255, 135, 135, 0.96);
+    stroke-width: 1px;
+}
+
+.imperial-star-log-app .isl-stronghold-star {
+    fill: #BC1E22;
+    stroke: rgba(255, 180, 180, 0.9);
+    stroke-width: 0.75px;
+    filter: drop-shadow(0 0 3px rgba(188, 30, 34, 0.95));
+    vector-effect: non-scaling-stroke;
+}
+
+@keyframes isl-stronghold-control-pulse {
+    0% {
+        opacity: 0.7;
+        transform: scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(5.5);
+    }
+}
+
+.imperial-star-log-app .isl-ship-token {
+    position: absolute;
+    width: clamp(28px, 4.2%, 48px);
+    aspect-ratio: 1;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    cursor: crosshair;
+    color: #ffffff;
+    filter: drop-shadow(0 0 5px rgba(21, 242, 253, 0.78));
+}
+
+.imperial-star-log-app .isl-ship-radar {
+    position: absolute;
+    inset: 0;
+    display: block;
+    border-radius: 50%;
+    overflow: hidden;
+    background: transparent;
+}
+
+.imperial-star-log-app .isl-ship-radar::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(21, 242, 253, 0) 68%, rgba(21, 242, 253, 0.28) 100%);
+    animation: isl-ship-radar-sweep 3s linear infinite;
+}
+
+.imperial-star-log-app .isl-ship-radar svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    z-index: 1;
+}
+
+.imperial-star-log-app .isl-ship-radar-grid {
+    transform-origin: 100px 100px;
+    animation: isl-ship-radar-grid-spin 40s linear infinite reverse;
+}
+
+.imperial-star-log-app .isl-ship-radar-dots {
+    animation: isl-ship-radar-data-stream 3s linear infinite;
+}
+
+.imperial-star-log-app .isl-ship-radar-crosshairs {
+    transform-origin: 100px 100px;
+    animation: isl-ship-radar-seek 7s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+}
+
+.imperial-star-log-app .isl-ship-radar-ping {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: isl-ship-radar-ping 2.5s ease-out infinite;
+}
+
+.imperial-star-log-app .isl-ship-radar-triangle {
+    filter: drop-shadow(0 0 2px rgba(21, 242, 253, 0.65));
+}
+
+.imperial-star-log-app .isl-ship-token:hover {
+    color: #15f2fd;
+}
+
+@keyframes isl-ship-radar-sweep {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes isl-ship-radar-grid-spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes isl-ship-radar-data-stream {
+    to { stroke-dashoffset: -100; }
+}
+
+@keyframes isl-ship-radar-seek {
+    0% { transform: rotate(15deg); }
+    15%, 25% { transform: rotate(105deg); }
+    40% { transform: rotate(230deg); }
+    55%, 65% { transform: rotate(245deg); }
+    80% { transform: rotate(385deg); }
+    90%, 100% { transform: rotate(375deg); }
+}
+
+@keyframes isl-ship-radar-ping {
+    0% { opacity: 1; transform: scale(0.12); }
+    100% { opacity: 0; transform: scale(3.6); }
+}
+
+.imperial-star-log-app .isl-route-token {
+    position: absolute;
+    z-index: 4;
+    width: clamp(16px, 2.6%, 28px);
+    aspect-ratio: 1;
+    border: 2px solid #40e8ff;
+    border-radius: 50%;
+    background: rgba(6, 28, 35, 0.92);
+    box-shadow: 0 0 14px rgba(64, 232, 255, 0.9);
+    transform: translate(-50%, -50%);
+    cursor: grab;
+}
+
+.imperial-star-log-app .isl-route-token::before,
+.imperial-star-log-app .isl-route-token::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background: #40e8ff;
+    transform: translate(-50%, -50%);
+}
+
+.imperial-star-log-app .isl-route-token::before {
+    width: 150%;
+    height: 2px;
+}
+
+.imperial-star-log-app .isl-route-token::after {
+    width: 2px;
+    height: 150%;
+}
+
+.imperial-star-log-app .isl-route-token:active {
+    cursor: grabbing;
+}
+
+.imperial-star-log-app .isl-planet-focus-marker {
+    position: absolute;
+    z-index: 1;
+    box-sizing: border-box;
+    overflow: visible;
+    border: 2px solid #15F2FD;
+    outline: 1px solid rgba(21, 242, 253, 0.9);
+    outline-offset: -9px;
+    background: rgba(21, 242, 253, 0.13);
+    box-shadow:
+        inset 0 0 18px rgba(21, 242, 253, 0.56),
+        0 0 12px rgba(21, 242, 253, 0.82);
+    pointer-events: none;
+    animation: isl-planet-focus-grid-pulse 1.9s steps(2, end) infinite;
+}
+
+.imperial-star-log-app .isl-planet-focus-marker::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border: 2px solid rgba(21, 242, 253, 0.96);
+    box-shadow: 0 0 12px rgba(21, 242, 253, 0.88);
+    transform-origin: center;
+    animation: isl-planet-focus-edge-pulse 1.9s ease-out infinite;
+}
+
+.imperial-star-log-app .isl-planet-focus-marker::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: #15F2FD;
+    box-shadow:
+        0 0 6px rgba(21, 242, 253, 0.95),
+        0 0 14px rgba(21, 242, 253, 0.92);
+    animation: isl-planet-focus-scanline 1.9s linear infinite;
+}
+
+.imperial-star-log-app .isl-map-route-placement .isl-map-stage {
+    cursor: crosshair;
+}
+
+.imperial-star-log-app .isl-map-route-placement .isl-map-stage.isl-map-panning {
+    cursor: grabbing;
+}
+
+@keyframes isl-planet-focus-grid-pulse {
+    0%, 100% {
+        opacity: 0.75;
+        box-shadow:
+            inset 0 0 12px rgba(21, 242, 253, 0.38),
+            0 0 8px rgba(21, 242, 253, 0.62);
+    }
+
+    50% {
+        opacity: 1;
+        box-shadow:
+            inset 0 0 24px rgba(21, 242, 253, 0.68),
+            0 0 18px rgba(21, 242, 253, 0.94);
+    }
+}
+
+@keyframes isl-planet-focus-edge-pulse {
+    0% {
+        opacity: 0.92;
+        transform: scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(1.9);
+    }
+}
+
+@keyframes isl-planet-focus-scanline {
+    0% {
+        top: 0;
+    }
+
+    100% {
+        top: calc(100% - 2px);
+    }
+}
+
+.imperial-star-log-app .isl-map-readout {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 3;
+    border: 1px solid #ff3333;
+    background: rgba(0, 0, 0, 0.74);
+    color: #ffcccc;
+    padding: 8px 10px;
+    font-size: 0.78rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-planet-popup {
+    position: absolute;
+    top: clamp(48px, 10%, 72px);
+    left: clamp(340px, 52%, 620px);
+    width: min(clamp(320px, 46%, 720px), calc(100% - 24px));
+    height: min(clamp(320px, 72%, 720px), calc(100% - 24px));
+    min-height: 0;
+    border: 2px solid #ff3333;
+    background: rgba(5, 5, 5, 0.92);
+    box-shadow: 0 0 28px rgba(255, 51, 51, 0.35);
+    display: flex;
+    flex-direction: column;
+    padding: clamp(10px, 2%, 14px);
+    z-index: 2;
+}
+
+.imperial-star-log-app .isl-planet-popup-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex: 0 0 auto;
+    border-bottom: 1px solid #ff3333;
+    padding-bottom: 10px;
+    cursor: move;
+    user-select: none;
+}
+
+.imperial-star-log-app .isl-planet-popup-kicker {
+    color: #ffd24a;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.imperial-star-log-app .isl-planet-popup-title {
+    color: #ffffff;
+    font-size: 1.2rem;
+    font-weight: bold;
+    line-height: 1.2;
+    text-transform: uppercase;
+    word-break: break-word;
+}
+
+.imperial-star-log-app .isl-planet-popup-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: default;
+}
+
+.imperial-star-log-app .isl-icon-button {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    border: 1px solid #ff3333;
+    background: rgba(255, 51, 51, 0.08);
+    color: #ffcccc;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: bold;
+}
+
+.imperial-star-log-app .isl-icon-button:hover {
+    background: #ff3333;
+    color: #050505;
+}
+
+.imperial-star-log-app .isl-icon-button:focus-visible {
+    outline: 2px solid #ffd24a;
+    outline-offset: 2px;
+}
+
+.imperial-star-log-app .isl-planet-zoom-value {
+    min-width: 48px;
+    border: 1px solid rgba(255, 51, 51, 0.65);
+    background: rgba(0, 0, 0, 0.45);
+    color: #ffd24a;
+    padding: 7px 6px;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.imperial-star-log-app .isl-planet-popup-body {
+    flex: 1;
+    min-height: 0;
+    margin-top: 12px;
+    border: 1px solid rgba(255, 51, 51, 0.65);
+    background: rgba(0, 0, 0, 0.45);
+    display: block;
+    overflow: auto;
+    padding: 10px;
+    cursor: zoom-in;
+}
+
+.imperial-star-log-app .isl-planet-popup-body .isl-planet-fallback {
+    min-height: 100%;
+    display: grid;
+    place-items: center;
+    cursor: default;
+}
+
+.imperial-star-log-app .isl-planet-popup-body img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    object-fit: contain;
+}
+
+.imperial-star-log-app .isl-transmission-popup {
+    position: absolute;
+    top: clamp(72px, 14%, 118px);
+    left: clamp(340px, 52%, 620px);
+    width: min(clamp(340px, 44%, 680px), calc(100% - 24px));
+    border: 2px solid #ffd24a;
+    background: rgba(5, 5, 5, 0.96);
+    box-shadow: 0 0 32px rgba(255, 210, 74, 0.32);
+    padding: clamp(12px, 2%, 16px);
+    z-index: 4;
+}
+
+.imperial-star-log-app .isl-transmission-popup-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid #ffd24a;
+    padding-bottom: 10px;
+}
+
+.imperial-star-log-app .isl-transmission-popup-kicker {
+    color: #ff7777;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.imperial-star-log-app .isl-transmission-popup-title {
+    color: #ffffff;
+    font-size: 1.2rem;
+    font-weight: bold;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-transmission-popup-body {
+    margin-top: 14px;
+    color: #ffcccc;
+    font-size: 0.96rem;
+    line-height: 1.55;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-clearance-popup {
+    position: absolute;
+    top: clamp(72px, 14%, 118px);
+    left: clamp(340px, 52%, 620px);
+    width: min(clamp(340px, 44%, 680px), calc(100% - 24px));
+    border: 2px solid #bc1e22;
+    background: rgba(5, 5, 5, 0.96);
+    box-shadow: 0 0 32px rgba(188, 30, 34, 0.32);
+    padding: clamp(12px, 2%, 16px);
+    z-index: 5;
+}
+
+.imperial-star-log-app .isl-clearance-popup.hidden {
+    display: none !important;
+}
+
+.imperial-star-log-app .isl-clearance-popup-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid #bc1e22;
+    padding-bottom: 10px;
+}
+
+.imperial-star-log-app .isl-clearance-popup-kicker,
+.imperial-star-log-app .isl-clearance-tier {
+    color: #ff7777;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-clearance-popup-title,
+.imperial-star-log-app .isl-clearance-target {
+    color: #ffffff;
+    font-size: 1.2rem;
+    font-weight: bold;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-clearance-popup-body {
+    display: grid;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.imperial-star-log-app .isl-clearance-field {
+    display: grid;
+    gap: 6px;
+    color: #ffd24a;
+    font-size: 0.78rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-clearance-field input {
+    width: 100%;
+    border: 1px solid rgba(188, 30, 34, 0.85);
+    background: rgba(0, 0, 0, 0.56);
+    color: #ffffff;
+    padding: 10px;
+    font: inherit;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-clearance-status {
+    min-height: 1.3em;
+    color: #ffcccc;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-clearance-status[data-state="error"] {
+    color: #ff7777;
+}
+
+.imperial-star-log-app .isl-navdata-library {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+    color: #d8e6ea;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-navdata-form {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.imperial-star-log-app .isl-navdata-form label {
+    display: grid;
+    gap: 5px;
+    color: #ffd24a;
+    font-size: 0.72rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-navdata-form input,
+.imperial-star-log-app .isl-navdata-form select {
+    min-width: 0;
+}
+
+.imperial-star-log-app .isl-navdata-form .isl-form-actions {
+    grid-column: 1 / -1;
+}
+
+.imperial-star-log-app .isl-codex-startup {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.68);
+    z-index: 3;
+}
+
+.imperial-star-log-app .isl-codex-startup.hidden {
+    display: none !important;
+}
+
+.imperial-star-log-app .isl-codex-startup-panel {
+    width: min(720px, calc(100% - 48px));
+    height: 292px;
+    max-height: calc(100% - 48px);
+    border: 2px solid #ff3333;
+    background: rgba(5, 5, 5, 0.94);
+    box-shadow: 0 0 32px rgba(255, 51, 51, 0.4);
+    padding: 18px;
+    overflow: hidden;
+}
+
+.imperial-star-log-app .isl-codex-startup-layout {
+    display: grid;
+    grid-template-columns: minmax(132px, 168px) minmax(0, 1fr);
+    align-items: center;
+    gap: 20px;
+    height: 100%;
+    min-height: 0;
+}
+
+.imperial-star-log-app .isl-holo-emblem {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    min-width: 0;
+    border: 1px solid rgba(188, 30, 34, 0.72);
+    background:
+        linear-gradient(rgba(188, 30, 34, 0.14) 50%, rgba(5, 5, 5, 0.1) 50%),
+        radial-gradient(circle at 50% 50%, rgba(188, 30, 34, 0.3), rgba(188, 30, 34, 0.1) 45%, rgba(5, 5, 5, 0.08) 72%);
+    background-size: 100% 4px, 100% 100%;
+    box-shadow:
+        inset 0 0 22px rgba(188, 30, 34, 0.3),
+        0 0 24px rgba(188, 30, 34, 0.38);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    animation: isl-holo-flicker 2.8s infinite;
+}
+
+.imperial-star-log-app .isl-holo-emblem::before,
+.imperial-star-log-app .isl-holo-emblem::after {
+    content: "";
+    position: absolute;
+    inset: 10%;
+    border: 1px solid rgba(188, 30, 34, 0.38);
+    pointer-events: none;
+}
+
+.imperial-star-log-app .isl-holo-emblem::after {
+    inset: 20%;
+    border-color: rgba(188, 30, 34, 0.28);
+    transform: rotate(45deg);
+}
+
+.imperial-star-log-app .isl-holo-emblem-image {
+    position: absolute;
+    inset: 6%;
+    z-index: 1;
+    width: 88%;
+    height: 88%;
+    object-fit: contain;
+    opacity: 0.76;
+    mix-blend-mode: screen;
+    filter: saturate(0.82) brightness(0.78) contrast(1.15) drop-shadow(0 0 7px rgba(188, 30, 34, 0.95));
+    transition: opacity 560ms ease, filter 560ms ease, transform 560ms cubic-bezier(0.22, 1, 0.36, 1);
+    animation: none;
+}
+
+.imperial-star-log-app .isl-holo-emblem-imperial {
+    animation: isl-holo-image-jitter 4.6s steps(1, end) infinite;
+}
+
+.imperial-star-log-app .isl-holo-emblem-rebel {
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.94);
+    filter: grayscale(1) sepia(0.3) hue-rotate(158deg) saturate(0.72) brightness(0.62) contrast(1.12) drop-shadow(0 0 7px rgba(57, 74, 89, 0.9));
+}
+
+.imperial-star-log-app .isl-holo-emblem.is-distorting .isl-holo-emblem-imperial {
+    animation: isl-holo-image-jitter 4.6s steps(1, end) infinite, isl-holo-distort 170ms steps(2, end) infinite;
+}
+
+.imperial-star-log-app .isl-holo-emblem.is-rebel-frequency {
+    border-color: rgba(57, 74, 89, 0.9);
+    background:
+        linear-gradient(rgba(57, 74, 89, 0.16) 50%, rgba(5, 5, 5, 0.1) 50%),
+        radial-gradient(circle at 50% 50%, rgba(57, 74, 89, 0.42), rgba(57, 74, 89, 0.15) 45%, rgba(5, 5, 5, 0.08) 72%);
+    box-shadow:
+        inset 0 0 22px rgba(57, 74, 89, 0.46),
+        0 0 24px rgba(57, 74, 89, 0.55);
+}
+
+.imperial-star-log-app .isl-holo-emblem.is-rebel-frequency::before,
+.imperial-star-log-app .isl-holo-emblem.is-rebel-frequency::after {
+    border-color: rgba(57, 74, 89, 0.56);
+}
+
+.imperial-star-log-app .isl-holo-emblem.is-rebel-frequency .isl-holo-emblem-imperial {
+    opacity: 0;
+    transform: scale(0.92);
+    animation: none;
+}
+
+.imperial-star-log-app .isl-holo-emblem.is-rebel-frequency .isl-holo-emblem-rebel {
+    opacity: 0.86;
+    visibility: visible;
+    transform: scale(1);
+    animation: isl-holo-image-jitter 4.6s steps(1, end) infinite, isl-holo-rebel-flicker 2.9s steps(1, end) infinite;
+}
+
+.imperial-star-log-app .isl-holo-emblem-scanline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -18%;
+    height: 18%;
+    background: linear-gradient(180deg, rgba(188, 30, 34, 0), rgba(188, 30, 34, 0.5), rgba(188, 30, 34, 0));
+    animation: isl-holo-scan 2.4s linear infinite;
+    pointer-events: none;
+}
+
+.imperial-star-log-app .isl-holo-emblem.is-rebel-frequency .isl-holo-emblem-scanline {
+    background: linear-gradient(180deg, rgba(57, 74, 89, 0), rgba(57, 74, 89, 0.62), rgba(57, 74, 89, 0));
+}
+
+.imperial-star-log-app .isl-holo-emblem-sheen {
+    position: absolute;
+    z-index: 3;
+    inset: -30%;
+    opacity: 0;
+    background: linear-gradient(108deg, transparent 40%, rgba(220, 235, 244, 0.08) 46%, rgba(255, 255, 255, 0.86) 50%, rgba(220, 235, 244, 0.1) 54%, transparent 60%);
+    pointer-events: none;
+}
+
+.imperial-star-log-app .isl-holo-emblem.is-rebel-frequency .isl-holo-emblem-sheen {
+    animation: isl-holo-sheen 820ms ease-out both;
+}
+
+.imperial-star-log-app .isl-codex-startup-content {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.imperial-star-log-app .isl-codex-startup-title {
+    color: #ffffff;
+    border-bottom: 1px solid #ff3333;
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-codex-startup-lines {
+    height: 166px;
+    min-height: 166px;
+    overflow: hidden;
+    color: #ffcccc;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-codex-startup-line {
+    opacity: 0;
+    transform: translateY(4px);
+    animation: isl-codex-line-in 180ms ease-out forwards;
+}
+
+.imperial-star-log-app .isl-codex-startup-line.is-typing::after {
+    content: "_";
+    color: #ffcccc;
+    animation: isl-codex-cursor 420ms steps(2, end) infinite;
+}
+
+.imperial-star-log-app .isl-codex-startup-granted {
+    color: #ffd24a;
+    font-weight: bold;
+}
+
+.imperial-star-log-app .isl-codex-startup-error {
+    color: #ff4d4d;
+    font-weight: bold;
+    text-shadow: 0 0 7px rgba(188, 30, 34, 0.95);
+    animation: isl-codex-error-pulse 540ms steps(2, end) 3;
+}
+
+.imperial-star-log-app .isl-codex-startup-success {
+    color: #ffcccc;
+    font-weight: bold;
+}
+
+.imperial-star-log-app .isl-codex-startup-clearing {
+    animation: isl-codex-line-out 260ms ease-in forwards;
+}
+
+.imperial-star-log-app .isl-codex-startup-replacement {
+    animation: isl-codex-line-in 200ms ease-out forwards;
+}
+
+.imperial-star-log-app .isl-codex-startup-success.isl-codex-startup-replacement {
+    animation: isl-codex-line-in 200ms ease-out forwards, isl-codex-override-flash 760ms ease-out forwards;
+}
+
+@keyframes isl-codex-line-in {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes isl-codex-cursor {
+    50% {
+        opacity: 0;
+    }
+}
+
+@keyframes isl-codex-error-pulse {
+    50% {
+        opacity: 0.4;
+    }
+}
+
+@keyframes isl-codex-line-out {
+    to {
+        opacity: 0;
+        transform: translateX(-5px);
+    }
+}
+
+@keyframes isl-codex-override-flash {
+    0%,
+    28% {
+        color: #7cff9d;
+        text-shadow: 0 0 9px rgba(124, 255, 157, 0.9);
+    }
+
+    100% {
+        color: #ffcccc;
+        text-shadow: none;
+    }
+}
+
+@keyframes isl-holo-scan {
+    to {
+        transform: translateY(760%);
+    }
+}
+
+@keyframes isl-holo-flicker {
+    0%,
+    100% {
+        opacity: 0.96;
+    }
+
+    47% {
+        opacity: 0.9;
+    }
+
+    49% {
+        opacity: 0.74;
+    }
+
+    51% {
+        opacity: 1;
+    }
+}
+
+@keyframes isl-holo-image-jitter {
+    0%,
+    45%,
+    100% {
+        transform: translate(0, 0);
+    }
+
+    46% {
+        transform: translate(1px, -1px);
+    }
+
+    47% {
+        transform: translate(-1px, 0);
+    }
+
+    74% {
+        opacity: 0.72;
+    }
+
+    75% {
+        opacity: 0.46;
+    }
+
+    76% {
+        opacity: 0.78;
+    }
+}
+
+@keyframes isl-holo-distort {
+    0%,
+    100% {
+        clip-path: inset(0 0 0 0);
+        filter: saturate(0.82) brightness(0.78) contrast(1.15) drop-shadow(0 0 7px rgba(188, 30, 34, 0.95));
+    }
+
+    35% {
+        clip-path: polygon(0 2%, 100% 0, 100% 32%, 0 38%, 0 58%, 100% 54%, 100% 100%, 0 97%);
+        filter: saturate(1.1) brightness(1.28) contrast(1.45) blur(0.5px) drop-shadow(2px 0 4px rgba(255, 81, 81, 0.85));
+    }
+
+    68% {
+        clip-path: polygon(0 0, 100% 3%, 100% 45%, 0 40%, 0 66%, 100% 72%, 100% 100%, 0 100%);
+        filter: saturate(0.6) brightness(0.56) contrast(1.7) drop-shadow(-2px 0 4px rgba(188, 30, 34, 0.9));
+    }
+}
+
+@keyframes isl-holo-rebel-flicker {
+    0%,
+    100% {
+        opacity: 0.86;
+    }
+
+    8% {
+        opacity: 0.62;
+    }
+
+    10% {
+        opacity: 0.9;
+    }
+}
+
+@keyframes isl-holo-sheen {
+    0% {
+        opacity: 0;
+        transform: translateX(-58%) skewX(-16deg);
+    }
+
+    20% {
+        opacity: 0.9;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateX(58%) skewX(-16deg);
+    }
+}
+
+@media (max-width: 760px) {
+    .imperial-star-log-app .isl-dashboard {
+        display: block;
+        overflow: auto;
+    }
+
+    .imperial-star-log-app .isl-panel {
+        width: 100%;
+        min-height: 0;
+        height: auto;
+        border-right: 0;
+        border-bottom: 3px solid #ff3333;
+    }
+
+    .imperial-star-log-app .isl-map-overlay {
+        min-height: clamp(340px, 52vh, 560px);
+    }
+
+    .imperial-star-log-app .isl-planet-popup {
+        top: 16px;
+        left: 16px;
+        width: calc(100% - 32px);
+        height: min(460px, calc(100% - 32px));
+        min-height: min(300px, calc(100% - 32px));
+    }
+
+    .imperial-star-log-app .isl-transmission-popup {
+        top: 16px;
+        left: 16px;
+        width: calc(100% - 32px);
+    }
+
+    .imperial-star-log-app .isl-codex-startup-layout {
+        grid-template-columns: 1fr;
+        justify-items: center;
+    }
+
+    .imperial-star-log-app .isl-codex-startup-panel {
+        height: min(500px, calc(100% - 48px));
+    }
+
+    .imperial-star-log-app .isl-navdata-form {
+        grid-template-columns: 1fr;
+    }
+
+    .imperial-star-log-app .isl-holo-emblem {
+        width: min(160px, 58vw);
+    }
+
+    .imperial-star-log-app .isl-location-form,
+    .imperial-star-log-app .isl-planet-form {
+        grid-template-columns: 1fr;
+    }
+
+    .imperial-star-log-app .isl-calibration-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .imperial-star-log-app .isl-astronav-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .imperial-star-log-app .isl-astronav-form .isl-form-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .imperial-star-log-app .isl-warning-grade-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .imperial-star-log-app .isl-tab-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

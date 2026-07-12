@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galactic Operations Console - Live Preview</title>
+    <script>
+        window.ISL_DEV_BUILD = Date.now();
+        document.write(`<link rel="stylesheet" href="styles/imperial-star-log.css?v=${window.ISL_DEV_BUILD}">`);
+    </script>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            background: #050505;
+            overflow: hidden;
+        }
+
+        #dev-root,
+        #dev-root .imperial-star-log-app {
+            width: 100%;
+            height: 100%;
+        }
+
+        #dev-root .imperial-star-log-app {
+            display: block;
+        }
+
+        .dev-harness-badge {
+            position: fixed;
+            right: 10px;
+            bottom: 10px;
+            z-index: 9999;
+            border: 1px solid #ffd24a;
+            background: rgba(0, 0, 0, 0.82);
+            color: #ffd24a;
+            padding: 6px 8px;
+            font: 12px/1.2 "Courier New", Courier, monospace;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="dev-root"></div>
+    <div class="dev-harness-badge" id="dev-harness-badge">Live Harness</div>
+
+    <script>
+        (() => {
+            "use strict";
+
+            const MODULE_ID = "star-log-imperial";
+            const MODULE_PREFIX = `modules/${MODULE_ID}/`;
+            const STORAGE_PREFIX = `dev.${MODULE_ID}.`;
+            const DEV_BUILD = window.ISL_DEV_BUILD || Date.now();
+            const hookCallbacks = new Map();
+            const originalFetch = window.fetch.bind(window);
+
+            window.fetch = (resource, options) => {
+                const url = typeof resource === "string" ? resource : resource?.url;
+
+                if (typeof url === "string" && url.startsWith(MODULE_PREFIX)) {
+                    const localUrl = url.slice(MODULE_PREFIX.length);
+                    return originalFetch(cacheBustUrl(localUrl), options);
+                }
+
+                if (typeof url === "string" && shouldCacheBust(url)) {
+                    return originalFetch(cacheBustUrl(url), options);
+                }
+
+                return originalFetch(resource, options);
+            };
+
+            function shouldCacheBust(url) {
+                return /\.(hbs|csv|json|txt)(?:$|\?)/i.test(url);
+            }
+
+            function cacheBustUrl(url) {
+                if (!shouldCacheBust(url) && !url.endsWith(".hbs") && !url.endsWith(".csv") && !url.endsWith(".txt")) return url;
+                const separator = url.includes("?") ? "&" : "?";
+                return `${url}${separator}v=${DEV_BUILD}`;
+            }
+
+            window.Hooks = {
+                once(name, callback) {
+                    addHook(name, callback, true);
+                },
+                on(name, callback) {
+                    addHook(name, callback, false);
+                },
+                callAll(name, ...args) {
+                    const callbacks = hookCallbacks.get(name) ?? [];
+                    hookCallbacks.set(name, callbacks.filter((entry) => !entry.once));
+                    callbacks.forEach((entry) => entry.callback(...args));
+                }
+            };
+
+            function addHook(name, callback, once) {
+                const callbacks = hookCallbacks.get(name) ?? [];
+                callbacks.push({ callback, once });
+                hookCallbacks.set(name, callbacks);
+            }
+
+            window.ui = {
+                notifications: {
+                    info: (message) => console.info(message),
+                    warn: (message) => console.warn(message),
+                    error: (message) => console.error(message)
+                }
+            };
+
+            const settingsStore = new Map();
+
+            window.game = {
+                user: {
+                    id: "dev-gm",
+                    active: true,
+                    isGM: true
+                },
+                users: {
+                    filter(callback) {
+                        return [window.game.user].filter(callback);
+                    },
+                    get(id) {
+                        return id === window.game.user.id ? window.game.user : null;
+                    },
+                    [Symbol.iterator]: function* iterator() {
+                        yield window.game.user;
+                    }
+                },
+                settings: {
+                    register(moduleId, key, config) {
+                        const settingKey = `${moduleId}.${key}`;
+                        settingsStore.set(settingKey, config);
+
+                        const storageKey = STORAGE_PREFIX + settingKey;
+                        if (localStorage.getItem(storageKey) === null) {
+                            localStorage.setItem(storageKey, serializeSettingValue(config.default));
+                        }
+                    },
+                    get(moduleId, key) {
+                        const settingKey = `${moduleId}.${key}`;
+                        const config = settingsStore.get(settingKey);
+                        const storageKey = STORAGE_PREFIX + settingKey;
+                        const storedValue = localStorage.getItem(storageKey);
+
+                        if (storedValue === null) return config?.default;
+                        return deserializeSettingValue(storedValue, config?.type);
+                    },
+                    async set(moduleId, key, value) {
+                        const settingKey = `${moduleId}.${key}`;
+                        const config = settingsStore.get(settingKey);
+                        localStorage.setItem(STORAGE_PREFIX + settingKey, serializeSettingValue(value));
+                        config?.onChange?.(value);
+                        return value;
+                    }
+                },
+                socket: {
+                    on() {},
+                    emit() {}
+                },
+                keybindings: {
+                    register() {}
+                },
+                modules: new Map([[MODULE_ID, { id: MODULE_ID }]])
+            };
+
+            function serializeSettingValue(value) {
+                return JSON.stringify(value);
+            }
+
+            function deserializeSettingValue(value, type) {
+                try {
+                    const parsed = JSON.parse(value);
+                    if (type === Boolean) return Boolean(parsed);
+                    if (type === String) return String(parsed ?? "");
+                    if (type === Number) return Number(parsed);
+                    return parsed;
+                } catch (error) {
+                    return value;
+                }
+            }
+
+            window.addEventListener("storage", (event) => {
+                if (!event.key?.startsWith(STORAGE_PREFIX)) return;
+
+                const settingKey = event.key.slice(STORAGE_PREFIX.length);
+                const config = settingsStore.get(settingKey);
+                if (!config?.onChange) return;
+
+                const value = event.newValue === null
+                    ? config.default
+                    : deserializeSettingValue(event.newValue, config.type);
+                config.onChange(value);
+            });
+
+            window.renderTemplate = async (templatePath, data) => {
+                const localTemplatePath = templatePath.startsWith(MODULE_PREFIX)
+                    ? templatePath.slice(MODULE_PREFIX.length)
+                    : templatePath;
+                const response = await fetch(cacheBustUrl(localTemplatePath), { cache: "no-store" });
+
+                if (!response.ok) {
+                    throw new Error(`${localTemplatePath} returned ${response.status}`);
+                }
+
+                const template = await response.text();
+                return renderDevTemplate(template, data).replaceAll(MODULE_PREFIX, "");
+            };
+
+            function renderDevTemplate(template, data) {
+                let output = template;
+
+                output = output.replace(/{{#each\s+([\w.]+)}}([\s\S]*?){{\/each}}/g, (_match, key, block) => {
+                    const items = resolveTemplateValue(data, key) ?? [];
+                    return Array.from(items).map((item) => {
+                        return block.replace(/{{this}}/g, escapeHtml(item));
+                    }).join("");
+                });
+
+                output = renderDevIfBlocks(output, data);
+
+                output = output.replace(/{{\s*([\w.]+)\s*}}/g, (_match, key) => {
+                    return escapeHtml(resolveTemplateValue(data, key) ?? "");
+                });
+
+                return output;
+            }
+
+            function renderDevIfBlocks(template, data) {
+                const openPattern = /{{\s*#if\s+([\w.]+)\s*}}/;
+                let output = template;
+                let match = openPattern.exec(output);
+
+                while (match) {
+                    const block = findDevIfBlock(output, match.index, match[0].length);
+                    if (!block) break;
+
+                    const selectedBlock = resolveTemplateValue(data, match[1])
+                        ? block.truthyBlock
+                        : block.falseyBlock;
+                    output = `${output.slice(0, match.index)}${renderDevIfBlocks(selectedBlock, data)}${output.slice(block.endIndex)}`;
+                    match = openPattern.exec(output);
+                }
+
+                return output;
+            }
+
+            function findDevIfBlock(template, startIndex, openLength) {
+                const tagPattern = /{{\s*(#if\s+[\w.]+|else|\/if)\s*}}/g;
+                const contentStart = startIndex + openLength;
+                let depth = 1;
+                let elseIndex = -1;
+                let elseLength = 0;
+
+                tagPattern.lastIndex = contentStart;
+
+                for (let match = tagPattern.exec(template); match; match = tagPattern.exec(template)) {
+                    const tag = match[1];
+
+                    if (tag.startsWith("#if ")) {
+                        depth += 1;
+                        continue;
+                    }
+
+                    if (tag === "else" && depth === 1) {
+                        elseIndex = match.index;
+                        elseLength = match[0].length;
+                        continue;
+                    }
+
+                    if (tag !== "/if") continue;
+
+                    depth -= 1;
+                    if (depth !== 0) continue;
+
+                    const closeIndex = match.index;
+                    return {
+                        truthyBlock: template.slice(contentStart, elseIndex >= 0 ? elseIndex : closeIndex),
+                        falseyBlock: elseIndex >= 0 ? template.slice(elseIndex + elseLength, closeIndex) : "",
+                        endIndex: closeIndex + match[0].length
+                    };
+                }
+
+                return null;
+            }
+
+            function resolveTemplateValue(data, path) {
+                return String(path).split(".").reduce((value, key) => {
+                    return value?.[key];
+                }, data);
+            }
+
+            function escapeHtml(value) {
+                return String(value).replace(/[&<>"']/g, (char) => ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    "\"": "&quot;",
+                    "'": "&#39;"
+                }[char]));
+            }
+
+            window.Application = class DevApplication {
+                static get defaultOptions() {
+                    return {};
+                }
+
+                constructor() {
+                    this.rendered = false;
+                    this.element = null;
+                }
+
+                getData() {
+                    return {};
+                }
+
+                activateListeners() {}
+
+                bringToFront() {}
+
+                async render() {
+                    const options = this.constructor.defaultOptions;
+                    const html = await window.renderTemplate(options.template, this.getData());
+                    const root = document.getElementById("dev-root");
+                    const app = document.createElement("section");
+                    app.className = ["imperial-star-log-app", ...(options.classes ?? [])]
+                        .filter(Boolean)
+                        .join(" ");
+                    const content = document.createElement("div");
+                    content.className = "window-content";
+                    content.innerHTML = html;
+                    app.appendChild(content);
+                    root.replaceChildren(app);
+                    this.element = app;
+                    this.rendered = true;
+                    this.activateListeners(content);
+                    return this;
+                }
+            };
+
+            window.addEventListener("DOMContentLoaded", () => {
+                const badge = document.getElementById("dev-harness-badge");
+                if (badge) badge.textContent = `Live Harness ${new Date(DEV_BUILD).toLocaleTimeString()}`;
+
+                const script = document.createElement("script");
+                script.src = `scripts/imperial-star-log.js?v=${DEV_BUILD}`;
+                script.onload = () => {
+                    window.Hooks.callAll("init");
+                    window.Hooks.callAll("ready");
+                    window.ImperialStarLog?.open?.();
+                };
+                document.body.appendChild(script);
+            });
+        })();
+    </script>
+</body>
+</html>

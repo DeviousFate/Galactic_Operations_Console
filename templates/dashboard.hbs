@@ -1,0 +1,611 @@
+<div class="isl-dashboard">
+    <aside class="isl-panel">
+        <div class="isl-crest">
+            <span class="isl-crest-aurebesh" aria-hidden="true">Imperial Security Bureau</span>
+            <span class="isl-crest-basic">ISB // Secure Network</span>
+        </div>
+
+        <div class="isl-tab-controls" role="tablist" aria-label="Imperial operations terminal tabs">
+            <button class="isl-tab-button active" type="button" role="tab" aria-selected="true" aria-controls="isl-ops-tab" data-tab-target="isl-ops-tab">Ops</button>
+            <button class="isl-tab-button" type="button" role="tab" aria-selected="false" aria-controls="isl-planet-tab" data-tab-target="isl-planet-tab">Intel</button>
+            <button class="isl-tab-button" type="button" role="tab" aria-selected="false" aria-controls="isl-ship-tab" data-tab-target="isl-ship-tab">Systems</button>
+            <button class="isl-tab-button isl-confidential-tab" type="button" role="tab" aria-selected="false" aria-controls="isl-confidential-tab" data-tab-target="isl-confidential-tab">ISB Conf</button>
+        </div>
+
+        <section class="isl-tab-panel active" id="isl-ops-tab" role="tabpanel">
+            <div class="isl-widget">
+                <div class="isl-widget-title">Mission Theater</div>
+                <div class="isl-data-text" id="isl-location-data">
+                    Objective World: Tatooine<br>
+                    Tactical Grid: R16<br>
+                    Sector: Arkanis<br>
+                    Operating Region: Outer Rim
+                </div>
+
+                <div class="isl-location-status" id="isl-location-status">Mission theater synchronized from transit telemetry.</div>
+                <div class="isl-aurebesh" aria-label="Imperial security clearance code 478.291.A.489">Imperial Security // 478.291.A.489</div>
+            </div>
+
+            <div class="isl-widget">
+                <div class="isl-widget-title">Mission Orders</div>
+                <div class="isl-static-text" data-mission-static>{{missionBrief}}</div>
+            </div>
+        </section>
+
+        <section class="isl-tab-panel" id="isl-planet-tab" role="tabpanel">
+            <div class="isl-widget">
+                <div class="isl-widget-title">Target Analysis</div>
+                <div class="isl-data-text">
+                    Enter a world designation to retrieve the available intelligence dossier.
+                </div>
+
+                <form class="isl-planet-form" id="isl-planet-form">
+                    <input class="isl-planet-input" id="isl-planet-input" name="planet" list="isl-planet-options" autocomplete="off" placeholder="TATOOINE" aria-label="Target world designation">
+                    <datalist id="isl-planet-options">
+                        {{#each planets}}
+                            <option value="{{this}}"></option>
+                        {{/each}}
+                    </datalist>
+                    <button class="isl-action-button" type="submit">Analyze</button>
+                </form>
+
+                <div class="isl-form-actions">
+                    <button class="isl-action-button isl-secondary-button" type="button" data-action="recall-planet-record" disabled>Recall Target Dossier</button>
+                </div>
+
+                <div class="isl-planet-result-text" id="isl-planet-result-text">Awaiting target designation.</div>
+            </div>
+
+            <div class="isl-widget">
+                <div class="isl-widget-title">NavData Library</div>
+                <div class="isl-data-text">
+                    Acquired charts determine which regions, sectors, grids, and planetary dossiers can be navigated or analyzed.
+                </div>
+                <div class="isl-navdata-library" data-navdata-library aria-live="polite">NavData library synchronizing.</div>
+            </div>
+
+            <div class="isl-widget">
+                <div class="isl-widget-title">Sector Reconnaissance</div>
+                <div class="isl-data-text">
+                    Refresh tactical intelligence for the active mission theater.
+                </div>
+                <div class="isl-form-actions">
+                    <button class="isl-action-button" type="button" data-action="scan-sector">Run Tactical Scan</button>
+                </div>
+                <div class="isl-location-status" id="isl-location-status">Mission theater database initializing.</div>
+                <label class="isl-toggle-row">
+                    <input type="checkbox" data-map-indicators-hidden {{#if mapIndicatorsHidden}}checked{{/if}}>
+                    <span>Suppress Sector Markers</span>
+                </label>
+            </div>
+        </section>
+
+        <section class="isl-tab-panel" id="isl-ship-tab" role="tabpanel">
+            <div class="isl-ship-tab-controls" role="tablist" aria-label="Vessel and deception control tabs">
+                <button class="isl-tab-button active" type="button" role="tab" aria-selected="true" aria-controls="isl-ship-systems-panel" data-ship-tab-target="isl-ship-systems-panel">Vessel Control</button>
+                <button class="isl-tab-button" type="button" role="tab" aria-selected="false" aria-controls="isl-astronav-panel" data-ship-tab-target="isl-astronav-panel">NaviComputer</button>
+            </div>
+
+            <section class="isl-ship-tab-panel active" id="isl-ship-systems-panel" role="tabpanel">
+                <div class="isl-widget">
+                    <div class="isl-widget-title">Vessel &amp; Deception Control</div>
+                    <div class="isl-data-text">
+                        Vessel Profile: Modified Deep-Space Courier<br>
+                        Cover Identity: <i>The Rust-Wake</i> (Forged)<br>
+                        Mission Theater: <span data-ship-location-readout>{{liveState.location}}</span><br>
+                        Current Grid: <span data-ship-grid-readout>{{liveState.shipGrid}}</span><br>
+                        Vessel Readiness: Sub-light engines nominal.<br>
+                        Deception Suite: <span data-stealth-readout>{{#if stealthSystemsEngaged}}Engaged{{else}}Standby{{/if}}</span><br>
+                        <br>
+                        <button class="isl-action-button isl-stealth-button{{#if stealthSystemsEngaged}} active{{/if}}" type="button" data-action="toggle-stealth" aria-pressed="{{stealthSystemsEngaged}}">Deception Systems</button>
+                        <div class="isl-ship-status" data-stealth-status>{{#if stealthSystemsEngaged}}Deception systems engaged.{{else}}Deception systems standby.{{/if}}</div>
+                        <div class="isl-ship-status" data-live-state-status>Vessel telemetry synchronized.</div>
+                        <br>
+                        <b>/// LATERAL HULL PROJECTION ///</b><br>
+                        Profile: Sloped armored prow, tri-level aft housing.<br>
+                        <br>
+                        <b>/// DORSAL HULL PROJECTION ///</b><br>
+                        Chassis: Arrowhead hull, twin lateral thrust-fins.<br>
+                        <br>
+                        <b>/// DECK SCHEMATICS (3-TIER) ///</b><br>
+                        <br>
+                        <b>[DECK 3: UPPER - COMMAND]</b><br>
+                        &gt; Cockpit (4 stations)<br>
+                        &gt; Captain's Quarters (Secure)<br>
+                        &gt; Avionics &amp; Sensor Mainframe<br>
+                        &gt; Dorsal Gunner Turret Access<br>
+                        <br>
+                        <b>[DECK 2: MAIN - CREW]</b><br>
+                        &gt; Primary Airlock &amp; Boarding Ramp<br>
+                        &gt; Common Area / Galley<br>
+                        &gt; Crew Bunks (Sleeps 6)<br>
+                        &gt; Med-Bay (1 Bacta Tank)<br>
+                        &gt; Secure Armory<br>
+                        <br>
+                        <b>[DECK 1: LOWER - ENGINEERING]</b><br>
+                        &gt; Main Cargo Hold<br>
+                        &gt; Sub-light Engine Core<br>
+                        &gt; Hyperdrive Generator<br>
+                        &gt; Hidden Smuggling Compartments (Shielded)<br>
+                        &gt; Ventral Gunner Turret Access
+                    </div>
+                </div>
+            </section>
+
+            <section class="isl-ship-tab-panel" id="isl-astronav-panel" role="tabpanel">
+                <div class="isl-widget">
+                    <div class="isl-widget-title">NaviComputer</div>
+                    <form class="isl-astronav-form" id="isl-astronav-form">
+                        <label class="isl-astronav-field isl-astronav-field-wide">
+                            <span>Departure World / Grid / Region</span>
+                            <input class="isl-astronav-input" type="text" name="origin" list="isl-astronav-options" value="{{liveState.shipGrid}}" data-astronav-origin-grid autocomplete="off" aria-label="Transit departure">
+                        </label>
+                        <label class="isl-astronav-field isl-astronav-field-wide">
+                            <span>Objective World / Grid / Region</span>
+                            <input class="isl-astronav-input" type="text" name="destination" list="isl-astronav-options" placeholder="CORUSCANT, L10, or Core" data-astronav-destination autocomplete="off" aria-label="Transit objective">
+                            <datalist id="isl-astronav-options"></datalist>
+                        </label>
+
+                        <div class="isl-astronav-grid">
+                            <label class="isl-astronav-field">
+                                <span>Fuel Required</span>
+                                <input class="isl-astronav-input" type="text" value="Plot transit" data-astronav-fuel-required readonly aria-label="Fuel required for transit plot">
+                            </label>
+                            <label class="isl-astronav-field">
+                                <span>Local Transit Leg</span>
+                                <select class="isl-astronav-input" name="realspaceLeg" data-astronav-field="realspaceLeg">
+                                    <option value="safe-jump" selected>Orbit to safe hyperspace jump distance (1 minute)</option>
+                                    <option value="surface-orbit">Surface of planet to orbit (1-5 minutes)</option>
+                                    <option value="moon">Orbit to planet's moon (10-30 minutes)</option>
+                                    <option value="same-system">Orbit to another planet in system (2-6 hours)</option>
+                                    <option value="outer-edge">Orbit to outer edge of system (12-24 hours)</option>
+                                    <option value="none">None / already at jump point</option>
+                                </select>
+                            </label>
+                            <label class="isl-astronav-field">
+                                <span>Transit Protocol</span>
+                                <select class="isl-astronav-input" name="transitMode" data-astronav-field="transitMode">
+                                    <option value="avoid-restricted" selected>Plot Around Restricted Grids</option>
+                                    <option value="direct-transit">Direct Transit (Clearance Required)</option>
+                                </select>
+                            </label>
+                            <label class="isl-astronav-field">
+                                <span>Hyperdrive Class</span>
+                                <select class="isl-astronav-input" name="hyperdriveClass" data-astronav-field="hyperdriveClass">
+                                    <option value="0.5">Class 0.5</option>
+                                    <option value="0.75">Class 0.75</option>
+                                    <option value="1" selected>Class 1</option>
+                                    <option value="1.5">Class 1.5</option>
+                                    <option value="2">Class 2</option>
+                                    <option value="3">Class 3</option>
+                                    <option value="4">Class 4</option>
+                                    <option value="5">Class 5</option>
+                                    <option value="8">Class 8</option>
+                                    <option value="12">Class 12</option>
+                                    <option value="15">Class 15</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="isl-form-actions">
+                            <button class="isl-action-button" type="submit">Plot Transit</button>
+                            <button class="isl-action-button" type="button" data-action="astronav-engage-transit" disabled>Engage Transit</button>
+                            <button class="isl-action-button isl-secondary-button" type="button" data-action="astronav-current-grid">Use Current Position</button>
+                            <button class="isl-action-button isl-secondary-button" type="button" data-action="astronav-place-route">Place Transit Marker</button>
+                            <button class="isl-action-button isl-secondary-button" type="button" data-action="astronav-clear-route">Clear Transit Plot</button>
+                        </div>
+                    </form>
+                    <div class="isl-ship-status" data-astronav-status>Transit plot awaiting regional coordinates.</div>
+                    <div class="isl-data-text isl-astronav-result" id="isl-astronav-result">
+                        Enter objective coordinates or a region to plot hyperspace transit.
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <section class="isl-tab-panel" id="isl-confidential-tab" role="tabpanel">
+            {{#if isGM}}
+                <details class="isl-widget isl-confidential-widget isl-collapsible-section">
+                    <summary class="isl-widget-title">ISB Confidential Terminal</summary>
+                    <div class="isl-data-text">
+                        Clearance: Overseer<br>
+                        Access Level: GM Authorized<br>
+                        Status: Classified channel open
+                    </div>
+                    <div class="isl-confidential-block">
+                        <div class="isl-confidential-line">&gt; Sector intelligence cache unlocked.</div>
+                        <div class="isl-confidential-line">&gt; Restricted campaign operations available.</div>
+                        <div class="isl-confidential-line">&gt; Player clearance bypassed.</div>
+                    </div>
+                </details>
+
+                <details class="isl-widget isl-confidential-widget isl-collapsible-section">
+                    <summary class="isl-widget-title">Warning Protocols</summary>
+                    <div class="isl-data-text">
+                        Transmit the selected grade protocol against the current OPS location.
+                    </div>
+                    <div class="isl-warning-grade-grid" aria-label="Manual warning protocol controls">
+                        <button class="isl-action-button isl-warning-grade-button" type="button" data-action="trigger-warning-grade" data-warning-grade="1">Grade 1</button>
+                        <button class="isl-action-button isl-warning-grade-button" type="button" data-action="trigger-warning-grade" data-warning-grade="2">Grade 2</button>
+                        <button class="isl-action-button isl-warning-grade-button" type="button" data-action="trigger-warning-grade" data-warning-grade="3">Grade 3</button>
+                        <button class="isl-action-button isl-warning-grade-button" type="button" data-action="trigger-warning-grade" data-warning-grade="4">Grade 4</button>
+                        <button class="isl-action-button isl-warning-grade-button" type="button" data-action="trigger-warning-grade" data-warning-grade="5">Grade 5</button>
+                    </div>
+                    <div class="isl-form-status" data-warning-status>Warning protocols on standby.</div>
+                </details>
+
+                <details class="isl-widget isl-confidential-widget isl-collapsible-section">
+                    <summary class="isl-widget-title">Live Hail Monitor</summary>
+                    <div class="isl-live-hail-log" data-live-hail-log aria-live="polite">No live hails recorded.</div>
+                </details>
+
+                <details class="isl-widget isl-confidential-widget isl-collapsible-section">
+                    <summary class="isl-widget-title">Station Briefing Archive</summary>
+                    <div class="isl-data-text">
+                        Create or refresh the GM-only Foundry journal entries containing station approach descriptions.
+                    </div>
+                    <div class="isl-form-actions">
+                        <button class="isl-action-button" type="button" data-action="generate-station-journals">Refresh Station Journals</button>
+                    </div>
+                    <div class="isl-form-status" data-station-journal-status>Station briefing archive standing by.</div>
+                </details>
+
+                <details class="isl-widget isl-confidential-widget isl-collapsible-section">
+                    <summary class="isl-widget-title">NavData Distribution</summary>
+                    <div class="isl-data-text">
+                        Distribute party NavData packages. Planetary packets unlock dossiers, sector surveys disclose local systems, grid fixes enable precise coordinates, and regional charts enable regional transit estimates.
+                    </div>
+                    <form class="isl-navdata-form" id="isl-navdata-form">
+                        <label>
+                            <span>Action</span>
+                            <select name="navDataAction">
+                                <option value="grant">Distribute</option>
+                                <option value="revoke">Revoke</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Package Level</span>
+                            <select name="navDataScope">
+                                <option value="regions">Region Chart</option>
+                                <option value="sectors">Sector Survey</option>
+                                <option value="grids">Grid Fix</option>
+                                <option value="planets">Planetary Packet</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Designation</span>
+                            <input type="text" name="navDataValue" list="isl-navdata-options" autocomplete="off" placeholder="Outer Rim, Arkanis, R16, or Tatooine">
+                        </label>
+                        <datalist id="isl-navdata-options"></datalist>
+                        <div class="isl-form-actions">
+                            <button class="isl-action-button" type="submit">Update Library</button>
+                        </div>
+                    </form>
+                    <div class="isl-form-status" data-navdata-status>NavData distribution standing by.</div>
+                </details>
+
+                <details class="isl-widget isl-confidential-widget isl-collapsible-section">
+                    <summary class="isl-widget-title">Restriction Tier Access</summary>
+                    <div class="isl-data-text">
+                        Toggle authorization by clearance tier. Unauthorized scans withhold restriction details.
+                    </div>
+
+                    <div class="isl-restriction-tier-list">
+                        <section class="isl-restriction-tier isl-tier-access-denied" data-restriction-tier="tier5">
+                            <div class="isl-tier-header">
+                                <div>
+                                    <div class="isl-tier-kicker">Restriction Tier 5</div>
+                                    <div class="isl-tier-title">Class-A Black Sites (Expunged)</div>
+                                </div>
+                                <label class="isl-tier-toggle">
+                                    <input type="checkbox" data-restriction-tier-toggle="tier5" {{#if restrictionTierAccess.tier5}}checked{{/if}}>
+                                    <span>Access</span>
+                                </label>
+                            </div>
+                            <div class="isl-tier-meta">Clearance Required: OMEGA-RED / Moff or Grand Inquisitor level</div>
+                            <div class="isl-tier-sitrep">Coordinates deleted from standard navicomputers. Unauthorized arrival triggers automated turbolaser batteries and immediate destruction.</div>
+                            <div class="isl-tier-worlds">
+                                <div><b>Byss [K11]</b>: The Emperor's Sanctuary. Deep Core hazard. Unstable hyperlanes. Garrisoned by the Imperial Royal Guard.</div>
+                                <div><b>Prakith [K10]</b>: Inquisitorius Fortress. Deep Core Citadel. Purge Troopers and holding blocks.</div>
+                                <div><b>Despayre / Horuz [L5]</b>: Project Celestial. Atrivis sector penal colony. Orbital construction yards detected.</div>
+                                <div><b>Ilum [G7]</b>: Resource Extraction. Militarized sector. Mechanized trench-mining and freezing hazards.</div>
+                                <div><b>Scarif [S15]</b>: Citadel Development. Planetary shield construction. Total airspace interdiction.</div>
+                                <div><b>Eadu [U10]</b>: Energy Conversion Lab. Storm hazards and canyon-based kyber refineries.</div>
+                            </div>
+                        </section>
+
+                        <section class="isl-restriction-tier isl-tier-access-denied" data-restriction-tier="tier4">
+                            <div class="isl-tier-header">
+                                <div>
+                                    <div class="isl-tier-kicker">Restriction Tier 4</div>
+                                    <div class="isl-tier-title">Quarantine / Anomalous Sectors</div>
+                                </div>
+                                <label class="isl-tier-toggle">
+                                    <input type="checkbox" data-restriction-tier-toggle="tier4" {{#if restrictionTierAccess.tier4}}checked{{/if}}>
+                                    <span>Access</span>
+                                </label>
+                            </div>
+                            <div class="isl-tier-meta">Clearance Required: INQUISITORIUS OVERRIDE</div>
+                            <div class="isl-tier-sitrep">Quarantined to protect Imperial secrets, suppress anomalous cults, or contain dangerous archaeological sites.</div>
+                            <div class="isl-tier-worlds">
+                                <div><b>Mustafar [L19]</b>: Lord Vader's Domain. Volcanic hazards. Airspace completely restricted.</div>
+                                <div><b>Kamino [S15]</b>: Eradicated / Graveyard. Imperial cruisers patrol ruins to prevent salvage.</div>
+                                <div><b>Korriban / Moraband [R5]</b>: Heritage Quarantine. Ancient tombs sealed. Skeleton garrison deployed.</div>
+                                <div><b>Ossus [R6]</b>: Heritage Quarantine. Jedi library ruins monitored to ambush survivors.</div>
+                                <div><b>Dantooine [L4]</b>: Baited Trap. Imperial garrison stationed over former Jedi Enclave.</div>
+                            </div>
+                        </section>
+
+                        <section class="isl-restriction-tier isl-tier-access-denied" data-restriction-tier="tier3">
+                            <div class="isl-tier-header">
+                                <div>
+                                    <div class="isl-tier-kicker">Restriction Tier 3</div>
+                                    <div class="isl-tier-title">Extreme Interdiction / Martial Law</div>
+                                </div>
+                                <label class="isl-tier-toggle">
+                                    <input type="checkbox" data-restriction-tier-toggle="tier3" {{#if restrictionTierAccess.tier3}}checked{{/if}}>
+                                    <span>Access</span>
+                                </label>
+                            </div>
+                            <div class="isl-tier-meta">Clearance Required: NOVA-GOLD / Sector Governor</div>
+                            <div class="isl-tier-sitrep">Standard systems undergoing brutal pacification. Massive garrisons and orbital blockades in effect.</div>
+                            <div class="isl-tier-worlds">
+                                <div><b>Geonosis [R16]</b>: Population Sterilized. Radioactive surface. Restricted orbit conceals construction rings.</div>
+                                <div><b>Kashyyyk [P9]</b>: Species Enslavement. Total blockade. Logging and heavy construction labor camps.</div>
+                                <div><b>Mon Cala [U6]</b>: Orbital Seizure. Shipyards nationalized. Heavy insurgent activity.</div>
+                                <div><b>Ryloth [R17]</b>: Doonium Strip-Mining. Heavy blockade. Twi'lek population subjugated.</div>
+                                <div><b>Utapau [N19]</b>: Punitive Occupation. Checkpoints choke sinkhole shafts and landing pads.</div>
+                            </div>
+                        </section>
+
+                        <section class="isl-restriction-tier isl-tier-access-denied" data-restriction-tier="tier2">
+                            <div class="isl-tier-header">
+                                <div>
+                                    <div class="isl-tier-kicker">Restriction Tier 2</div>
+                                    <div class="isl-tier-title">Strategic Naval Assets</div>
+                                </div>
+                                <label class="isl-tier-toggle">
+                                    <input type="checkbox" data-restriction-tier-toggle="tier2" {{#if restrictionTierAccess.tier2}}checked{{/if}}>
+                                    <span>Access</span>
+                                </label>
+                            </div>
+                            <div class="isl-tier-meta">Clearance Required: NAVAL LOGISTICS CLEARANCE</div>
+                            <div class="isl-tier-sitrep">Heavy industrial shipyards. Airspace saturated with TIE patrols, Star Destroyers, and customs checkpoints.</div>
+                            <div class="isl-tier-worlds">
+                                <div><b>Kuat [M10]</b>: Drive Yards Active. Artificial orbital ring and labyrinthine security checkpoints.</div>
+                                <div><b>Fondor [L13]</b>: Orbital Drydocks Active. Fleet refit staging ground with dense sensor nets.</div>
+                            </div>
+                        </section>
+
+                        <section class="isl-restriction-tier isl-tier-access-denied" data-restriction-tier="tier1">
+                            <div class="isl-tier-header">
+                                <div>
+                                    <div class="isl-tier-kicker">Restriction Tier 1</div>
+                                    <div class="isl-tier-title">Penal / Exploitation</div>
+                                </div>
+                                <label class="isl-tier-toggle">
+                                    <input type="checkbox" data-restriction-tier-toggle="tier1" {{#if restrictionTierAccess.tier1}}checked{{/if}}>
+                                    <span>Access</span>
+                                </label>
+                            </div>
+                            <div class="isl-tier-meta">Clearance Required: CHAIN-CODE VERIFICATION</div>
+                            <div class="isl-tier-sitrep">Hostile environments used for cheap labor and resource extraction. Transit restricted to prison transports and guard rotations.</div>
+                            <div class="isl-tier-worlds">
+                                <div><b>Mimban [O12]</b>: Active Warzone / Mining. Mud, trench warfare, walker patrols, hyperbaride claims.</div>
+                                <div><b>Wobani [R8]</b>: Labor Camp. Desolate agricultural world converted into prison complexes.</div>
+                            </div>
+                        </section>
+
+                        <section class="isl-restriction-tier isl-tier-access-denied" data-restriction-tier="tier0">
+                            <div class="isl-tier-header">
+                                <div>
+                                    <div class="isl-tier-kicker">Restriction Tier 0</div>
+                                    <div class="isl-tier-title">Imperial Center</div>
+                                </div>
+                                <label class="isl-tier-toggle">
+                                    <input type="checkbox" data-restriction-tier-toggle="tier0" {{#if restrictionTierAccess.tier0}}checked{{/if}}>
+                                    <span>Access</span>
+                                </label>
+                            </div>
+                            <div class="isl-tier-meta">Clearance Required: STANDARD CORE CIVILIAN / Heavy monitoring</div>
+                            <div class="isl-tier-sitrep">Seat of Imperial Power.</div>
+                            <div class="isl-tier-worlds">
+                                <div><b>Coruscant [K9/K10/L9/L10 Intersection]</b>: Secure. Civilian travel permitted in upper levels. Imperial Palace restricted and heavily defended.</div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="isl-form-status" data-restriction-tier-status>Restriction tier access synchronized.</div>
+                </details>
+
+                <form class="isl-grid-alignment-form" id="isl-grid-alignment-form">
+                    <details class="isl-widget isl-confidential-widget isl-collapsible-section">
+                        <summary class="isl-widget-title">Map Grid Alignment</summary>
+                        <div class="isl-data-text">
+                            Active grid: {{gridCalibration.columns}} columns ({{gridCalibration.firstColumn}}-{{gridCalibration.lastColumn}}) by {{gridCalibration.rows}} rows.
+                        </div>
+
+                        <label class="isl-toggle-row">
+                            <input type="checkbox" data-grid-alignment-unlocked {{#if gridAlignmentUnlocked}}checked{{/if}}>
+                            <span data-grid-alignment-lock-label>{{#if gridAlignmentUnlocked}}Alignment unlocked{{else}}Alignment locked{{/if}}</span>
+                        </label>
+
+                        <div class="isl-calibration-grid">
+                            <label class="isl-calibration-value">
+                                <span>Left %</span>
+                                <input class="isl-calibration-input" type="number" name="left" data-grid-alignment-field="left" min="0" max="100" step="0.1" value="{{gridCalibration.leftPercent}}">
+                            </label>
+                            <label class="isl-calibration-value">
+                                <span>Top %</span>
+                                <input class="isl-calibration-input" type="number" name="top" data-grid-alignment-field="top" min="0" max="100" step="0.1" value="{{gridCalibration.topPercent}}">
+                            </label>
+                            <label class="isl-calibration-value">
+                                <span>Width %</span>
+                                <input class="isl-calibration-input" type="number" name="width" data-grid-alignment-field="width" min="1" max="100" step="0.1" value="{{gridCalibration.widthPercent}}">
+                            </label>
+                            <label class="isl-calibration-value">
+                                <span>Height %</span>
+                                <input class="isl-calibration-input" type="number" name="height" data-grid-alignment-field="height" min="1" max="100" step="0.1" value="{{gridCalibration.heightPercent}}">
+                            </label>
+                            <label class="isl-calibration-value">
+                                <span>Rows</span>
+                                <input class="isl-calibration-input" type="number" name="rows" data-grid-alignment-field="rows" min="1" max="30" step="1" value="{{gridCalibration.rows}}">
+                            </label>
+                            <label class="isl-calibration-value">
+                                <span>Columns</span>
+                                <input class="isl-calibration-input" type="number" name="columns" value="{{gridCalibration.columns}}" readonly aria-label="Fixed grid columns">
+                            </label>
+                        </div>
+
+                        <div class="isl-form-actions">
+                            <button class="isl-action-button" type="submit" data-grid-alignment-save>Save Alignment</button>
+                            <button class="isl-action-button isl-secondary-button" type="button" data-action="reset-grid-alignment">Default Alignment</button>
+                        </div>
+                        <div class="isl-form-status" data-grid-alignment-status>Grid alignment locked.</div>
+                    </details>
+                </form>
+
+                <form class="isl-mission-form" id="isl-confidential-form">
+                    <details class="isl-widget isl-confidential-widget isl-collapsible-section">
+                        <summary class="isl-widget-title">Mission Orders Override</summary>
+                        <textarea class="isl-mission-textarea" id="isl-confidential-mission" data-mission-field rows="7" aria-label="Mission Orders Override">{{missionBrief}}</textarea>
+
+                        <div class="isl-form-actions">
+                            <button class="isl-action-button" type="submit">Save Brief</button>
+                            <button class="isl-action-button isl-secondary-button" type="button" data-action="reset-mission">Default Brief</button>
+                        </div>
+                        <div class="isl-form-status" data-mission-status>Confidential mission data synchronized.</div>
+                    </details>
+                </form>
+            {{else}}
+                <details class="isl-widget isl-confidential-widget isl-clearance-denied isl-collapsible-section">
+                    <summary class="isl-widget-title">ISB Confidential Terminal</summary>
+                    <div class="isl-clearance-stamp">Clearance Denied</div>
+                    <div class="isl-data-text">
+                        User credentials do not satisfy Imperial Security Bureau compartment access.
+                    </div>
+                    <div class="isl-confidential-block">
+                        <div class="isl-confidential-line">&gt; Identity challenge failed.</div>
+                        <div class="isl-confidential-line">&gt; Terminal locked to GM clearance.</div>
+                        <div class="isl-confidential-line">&gt; Incident logged.</div>
+                    </div>
+                </details>
+            {{/if}}
+        </section>
+    </aside>
+
+    <main class="isl-map-overlay" aria-label="Static galaxy map">
+        <div class="isl-map-viewport" id="isl-map-viewport">
+            <div class="isl-map-stage" id="isl-map-stage">
+                <img class="isl-static-map" src="modules/star-log-imperial/assets/GFFA-high.jpg" alt="Galaxy map">
+                <svg class="isl-grid-overlay" id="isl-grid-overlay" aria-hidden="true"></svg>
+                <svg class="isl-route-overlay" id="isl-route-overlay" aria-hidden="true"></svg>
+                <div class="isl-grid-edit-layer" id="isl-grid-edit-layer" aria-hidden="true">
+                    <button class="isl-grid-edit-surface" type="button" data-grid-edit-action="move" aria-label="Move grid alignment"></button>
+                    <button class="isl-grid-resize-handle isl-grid-resize-n" type="button" data-grid-edit-action="resize-n" aria-label="Scale grid alignment north"></button>
+                    <button class="isl-grid-resize-handle isl-grid-resize-ne" type="button" data-grid-edit-action="resize-ne" aria-label="Scale grid alignment northeast"></button>
+                    <button class="isl-grid-resize-handle isl-grid-resize-e" type="button" data-grid-edit-action="resize-e" aria-label="Scale grid alignment east"></button>
+                    <button class="isl-grid-resize-handle isl-grid-resize-se" type="button" data-grid-edit-action="resize-se" aria-label="Scale grid alignment southeast"></button>
+                    <button class="isl-grid-resize-handle isl-grid-resize-s" type="button" data-grid-edit-action="resize-s" aria-label="Scale grid alignment south"></button>
+                    <button class="isl-grid-resize-handle isl-grid-resize-sw" type="button" data-grid-edit-action="resize-sw" aria-label="Scale grid alignment southwest"></button>
+                    <button class="isl-grid-resize-handle isl-grid-resize-w" type="button" data-grid-edit-action="resize-w" aria-label="Scale grid alignment west"></button>
+                    <button class="isl-grid-resize-handle isl-grid-resize-nw" type="button" data-grid-edit-action="resize-nw" aria-label="Scale grid alignment northwest"></button>
+                </div>
+                <button class="isl-ship-token" id="isl-ship-token" type="button" aria-label="Vessel position">
+                    <span class="isl-ship-radar" aria-hidden="true">
+                        <svg viewBox="0 0 200 200" focusable="false">
+                            <g class="isl-ship-radar-grid" stroke="currentColor" stroke-width="5" fill="none">
+                                <circle cx="100" cy="100" r="80"></circle>
+                                <rect x="43.432" y="43.432" width="113.136" height="113.136"></rect>
+                            </g>
+                            <g class="isl-ship-radar-dots" stroke="currentColor" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="0 18">
+                                <path d="M 50 100 A 50 50 0 0 1 100 50"></path>
+                                <path d="M 150 100 A 50 50 0 0 1 100 150"></path>
+                            </g>
+                            <circle class="isl-ship-radar-ping" cx="100" cy="100" r="18" stroke="currentColor" stroke-width="3" fill="none"></circle>
+                            <g class="isl-ship-radar-crosshairs" stroke="currentColor" stroke-width="6" stroke-linecap="round">
+                                <line x1="100" y1="20" x2="100" y2="180"></line>
+                                <line x1="20" y1="100" x2="180" y2="100"></line>
+                            </g>
+                            <path class="isl-ship-radar-triangle" d="M 100 60 L 125 120 L 100 105 L 75 120 Z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round" transform="rotate(25 100 100)"></path>
+                        </svg>
+                    </span>
+                </button>
+                <button class="isl-route-token hidden" id="isl-route-token" type="button" aria-label="Planned route destination"></button>
+                <div class="isl-planet-focus-marker hidden" id="isl-planet-focus-marker" aria-hidden="true"></div>
+            </div>
+        </div>
+        <div class="isl-map-readout" id="isl-map-readout">Vessel Grid: {{liveState.shipGrid}}</div>
+    </main>
+
+    <div class="isl-planet-popup hidden" id="isl-planet-popup" aria-live="polite">
+        <div class="isl-planet-popup-header">
+            <div>
+                <div class="isl-planet-popup-kicker">Intelligence Dossier</div>
+                <div class="isl-planet-popup-title" id="isl-planet-popup-title">Awaiting Designation</div>
+            </div>
+            <div class="isl-planet-popup-actions">
+                <output class="isl-planet-zoom-value hidden" id="isl-planet-zoom-value">100%</output>
+            <button class="isl-icon-button" type="button" data-action="close-planet-popup" aria-label="Close intelligence dossier">X</button>
+            </div>
+        </div>
+
+        <div class="isl-planet-popup-body">
+            <img class="hidden" id="isl-planet-image" alt="">
+            <div class="isl-planet-fallback hidden" id="isl-planet-fallback">Intelligence Database Incomplete</div>
+        </div>
+    </div>
+
+    <div class="isl-transmission-popup hidden" id="isl-transmission-popup" role="alertdialog" aria-live="assertive" aria-labelledby="isl-transmission-popup-title">
+        <div class="isl-transmission-popup-header">
+            <div>
+                <div class="isl-transmission-popup-kicker" id="isl-transmission-popup-kicker">Priority Transmission</div>
+                <div class="isl-transmission-popup-title" id="isl-transmission-popup-title">Imperial Transmission</div>
+            </div>
+            <button class="isl-icon-button" type="button" data-action="close-transmission-popup" aria-label="Close Imperial transmission">X</button>
+        </div>
+
+        <div class="isl-transmission-popup-body" id="isl-transmission-popup-body"></div>
+    </div>
+
+    <div class="isl-clearance-popup hidden" id="isl-clearance-popup" role="dialog" aria-modal="true" aria-labelledby="isl-clearance-popup-title">
+        <div class="isl-clearance-popup-header">
+            <div>
+                <div class="isl-clearance-popup-kicker">Imperial Navigation Control</div>
+                <div class="isl-clearance-popup-title" id="isl-clearance-popup-title">Clearance Code Required</div>
+            </div>
+            <button class="isl-icon-button" type="button" data-action="close-clearance-popup" aria-label="Close clearance request">X</button>
+        </div>
+        <div class="isl-clearance-popup-body">
+            <div class="isl-clearance-target" id="isl-clearance-target">Restricted system</div>
+            <div class="isl-clearance-tier" id="isl-clearance-tier">Tier restriction</div>
+            <form id="isl-clearance-form">
+                <label class="isl-clearance-field">
+                    <span>Imperial Clearance Code</span>
+                    <input type="text" data-clearance-code autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXX-XX-XXXXX-XX" aria-label="Imperial clearance code">
+                </label>
+                <div class="isl-form-actions">
+                    <button class="isl-action-button" type="submit">Transmit Code</button>
+                </div>
+            </form>
+            <div class="isl-clearance-status" data-clearance-status aria-live="polite"></div>
+        </div>
+    </div>
+
+    <div class="isl-codex-startup hidden" id="isl-codex-startup" aria-live="polite">
+        <div class="isl-codex-startup-panel">
+            <div class="isl-codex-startup-layout">
+                <div class="isl-holo-emblem" aria-label="Imperial holographic emblem" role="img">
+                    <img class="isl-holo-emblem-image isl-holo-emblem-imperial" src="{{assetRoot}}assets/ui/Widget-8.png" alt="" loading="eager" decoding="async">
+                    <img class="isl-holo-emblem-image isl-holo-emblem-rebel" src="{{assetRoot}}assets/ui/Widget-4.png" alt="" loading="eager" decoding="async">
+                    <div class="isl-holo-emblem-scanline"></div>
+                    <div class="isl-holo-emblem-sheen"></div>
+                </div>
+                <div class="isl-codex-startup-content">
+                    <div class="isl-codex-startup-title">Codex: Network</div>
+                    <div class="isl-codex-startup-lines" id="isl-codex-startup-lines"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

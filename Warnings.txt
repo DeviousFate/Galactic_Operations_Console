@@ -1,0 +1,53 @@
+Grade 5: RESTRICTION TIER 5: CLASS-A BLACK SITES (Expunged)
+
+Byss, Prakith, Despayre, Horuz, Ilum, Scarif, Eadu
+
+Protocol: Lethal force authorized immediately. There is no negotiation. If your ship does not transmit a Tier-5 Omega-Red clearance code within 5 seconds of hyperspace reversion, automated defense platforms and orbital Interdictors will lock on. The warning is broadcast while the turbolasers are already firing.
+
+Automated Broadcast (All Frequencies):
+
+"ATTENTION (Read Ship Transponder or if N/A use default 'Unidentified Vessel'). You have encroached upon an Imperial Exclusion Zone. This is a terminal violation of Imperial Decree Order M-CA-422153. Power down your engines, lower your shields, and prepare for immediate destruction. There will be no further warnings."
+
+Grade 4: RESTRICTION TIER 4: QUARANTINE / ANOMALOUS SECTORS
+
+Mustafar, Kamino, Korriban, Ossus, Dantooine
+
+Protocol: Aggressive deterrence. These worlds are protected by automated warning buoys that broadcast continuously in a wide radius. If a ship crosses the buoy line, a live patrol craft will hail them with orders to turn back.
+
+Automated Warning Buoy:
+
+"WARNING. This system is under Imperial Quarantine. Lethal bio-hazards or structural anomalies are present. All approach vectors are closed. Reverse course immediately and jump to the nearest approved hyperlane."
+
+Live Patrol Hail (Upon crossing the perimeter):
+
+"(Read Ship Transponder or if N/A use default 'Unidentified Vessel'), this is Imperial Patrol. You are in violation of a Class-4 Quarantine Zone. Cut your engines and hold your current position. If you advance another kilometer, you will be fired upon. Transmit your registry and state your malfunction immediately."
+
+Grade 3: RESTRICTION TIER 3: EXTREME INTERDICTION / MARTIAL LAW
+
+Geonosis, Kashyyyk, Mon Cala, Ryloth, Utapau
+
+Protocol: Total military blockade. You will jump directly into a net of Star Destroyers and TIE fighter patrols. A live communications officer from the local flagship will hail you instantly. They are looking for smugglers, insurgents, and spies, and their trigger fingers are itchy.
+
+Live Star Destroyer Hail:
+
+"(Read Ship Transponder or if N/A use default 'Unidentified Vessel'), this is the Imperial Star Destroyer (Insert ISD Name). This system is under Level 3 Martial Law. You have entered a restricted zone. Power down your weapon systems, drop your shields, and transmit your clearance codes and chain-code registry immediately. Hold your current coordinates for tractor-beam apprehension and Imperial inspection. Failure to comply will be treated as an act of treason."
+
+Grade 2: RESTRICTION TIER 2: STRATEGIC NAVAL ASSETS
+
+Kuat, Fondor
+
+Protocol: Bureaucratic, hyper-regulated traffic control. The airspace is incredibly crowded, but every single ship is tracked by massive sensor nets. Deviating from your assigned physical lane will result in your ship being disabled by ion cannons to protect the shipyards.
+
+Automated Traffic Control:
+
+"(Read Ship Transponder or if N/A use default 'Unidentified Vessel'), you are entering the (Kuat Drive or Fondor Ship) Yards Orbital Security Zone. Broadcast your Imperial logistics manifest, chain-code, and assigned docking vector on encrypted channel zero-niner. Enter holding pattern Aurek-Six and await clearance. Straying from your assigned flight corridor will result in immediate ion-cannon disablement and asset seizure.
+
+Grade 1: RESTRICTION TIER 1: PENAL / EXPLOITATION
+
+Mimban, Wobani
+
+Protocol: Grumpy, overworked port authorities and prison wardens. They expect supply ships, prisoner transports, and corporate mining haulers. They will treat you with intense suspicion and will lock down your nav-computer if given the chance.
+
+Live Port Authority Hail:
+
+"(Read Ship Transponder or if N/A use default 'Unidentified Vessel'), this is Imperial Authority Air Control. This airspace is restricted to official transport and authorized supply vessels. Transmit your manifest and approach vector. Do not attempt to scan the surface, and do not alter course from the provided descent telemetry. Await localized scanning. Any deviation will be considered an escape attempt and met with overwhelming force."
