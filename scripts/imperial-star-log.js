@@ -1528,6 +1528,15 @@
             return true;
         }
 
+        if (readAstroNavTransitMode(dashboard) === "direct-transit" && Number(restriction.tier?.id) >= 3) {
+            return requestNavigationClearance(
+                dashboard,
+                target,
+                () => calculateAstroNavRoute(dashboard),
+                { directTransit: true }
+            );
+        }
+
         showNavigationRestrictionPopup(dashboard, target, restriction);
         return false;
     }
@@ -1620,7 +1629,7 @@
             .map((key) => key.slice("grid:".length));
     }
 
-    function requestNavigationClearance(dashboard, target, onAuthorized) {
+    function requestNavigationClearance(dashboard, target, onAuthorized, { directTransit = false } = {}) {
         if (!requiresNavigationClearance(target) || hasNavigationClearance(target)) {
             return true;
         }
@@ -1636,12 +1645,14 @@
 
         if (!popup || !restriction) return false;
 
-        dashboard._islNavigationClearanceRequest = { target, onAuthorized };
+        dashboard._islNavigationClearanceRequest = { target, onAuthorized, directTransit };
         if (targetReadout) targetReadout.textContent = system;
         if (tierReadout) tierReadout.textContent = `Tier ${restriction.tier.id} // ${restriction.tier.clearance}`;
         if (input) input.value = "";
         if (status) {
-            status.textContent = "Imperial clearance code required before navigation can continue.";
+            status.textContent = directTransit
+                ? "Imperial clearance code required before direct transit can continue."
+                : "Imperial clearance code required before navigation can continue.";
             delete status.dataset.state;
         }
         popup.classList.remove("hidden");
@@ -1661,7 +1672,9 @@
         const tierCodes = validCodes[getRestrictionTierKey(restriction?.tier?.id)] || [];
         if (!submittedCode || !tierCodes.includes(submittedCode)) {
             if (status) {
-                status.textContent = "Clearance code rejected. Verify credentials and retransmit.";
+                status.textContent = request.directTransit
+                    ? "Direct transit denied. Clearance credentials rejected."
+                    : "Clearance code rejected. Verify credentials and retransmit.";
                 status.dataset.state = "error";
             }
             input.select();
