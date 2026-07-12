@@ -3236,25 +3236,17 @@
 
     function getVesselInventory(actor) {
         const inventory = {
-            weapons: [],
-            systems: [],
-            modifications: []
+            armor: [],
+            hyperdrives: [],
+            shields: [],
+            stealth: []
         };
-        const supportedSystemTypes = new Set([
-            "equipment",
-            "tool",
-            "system",
-            "component",
-            "gadget",
-            "feature",
-            "feat",
-            "installation"
-        ]);
 
         Array.from(actor?.items?.contents ?? actor?.items ?? []).forEach((item) => {
             const type = String(item.type ?? "").trim().toLowerCase();
             const classification = [
                 type,
+                item.name,
                 item.system?.category,
                 item.system?.type,
                 item.system?.equipmentCategory,
@@ -3266,13 +3258,10 @@
                 quantity: Number.isFinite(quantity) && quantity > 1 ? quantity : null
             };
 
-            if (/weapon|cannon|turret|launcher|battery|blaster/.test(classification)) {
-                inventory.weapons.push(entry);
-            } else if (/modification|upgrade|enhancement|\bmod\b/.test(classification)) {
-                inventory.modifications.push(entry);
-            } else if (supportedSystemTypes.has(type) || /system|engine|drive|sensor|shield|computer|transponder|communications/.test(classification)) {
-                inventory.systems.push(entry);
-            }
+            if (/stealth|cloak|cloaking/.test(classification)) inventory.stealth.push(entry);
+            else if (/hyper\s*drive/.test(classification)) inventory.hyperdrives.push(entry);
+            else if (/shield/.test(classification)) inventory.shields.push(entry);
+            else if (/armor|armour/.test(classification)) inventory.armor.push(entry);
         });
 
         Object.values(inventory).forEach((entries) => {
@@ -3407,9 +3396,10 @@
         inventoryReadout.append(heading);
 
         const groups = [
-            ["Weapons", inventory.weapons],
-            ["Systems", inventory.systems],
-            ["Modifications", inventory.modifications]
+            ["Armor", inventory.armor],
+            ["Hyperdrives", inventory.hyperdrives],
+            ["Shields", inventory.shields],
+            ["Stealth / Cloaking", inventory.stealth]
         ];
         groups.forEach(([label, entries]) => {
             const group = document.createElement("div");
