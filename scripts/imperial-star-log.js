@@ -2392,7 +2392,7 @@
             buildGridSegments: buildAstroNavGridSegments,
             getGridRegion: getAstroNavGridRegion,
             restrictedEntries: restrictedGridEntries,
-            restrictedEntryByGrid,
+            restrictedEntryByGrid: restrictedGridEntryByGrid,
             hasRestrictionTierAccess,
             hasNavigationClearance
         };
