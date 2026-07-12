@@ -346,7 +346,7 @@
                 if (badge) badge.textContent = `Live Harness ${new Date(DEV_BUILD).toLocaleTimeString()}`;
 
                 const script = document.createElement("script");
-                script.src = `scripts/imperial-star-log.js?v=${DEV_BUILD}`;
+                script.src = `scripts/galactic-operations-console.js?v=${DEV_BUILD}`;
                 script.onload = () => {
                     window.Hooks.callAll("init");
                     window.Hooks.callAll("ready");
