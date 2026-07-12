@@ -3318,6 +3318,18 @@
             shields: [],
             stealth: []
         };
+        const inventoryItemTypes = new Set([
+            "equipment",
+            "tool",
+            "system",
+            "component",
+            "gadget",
+            "installation",
+            "modification",
+            "upgrade",
+            "enhancement",
+            "loot"
+        ]);
 
         Array.from(actor?.items?.contents ?? actor?.items ?? []).forEach((item) => {
             const type = String(item.type ?? "").trim().toLowerCase();
@@ -3325,11 +3337,19 @@
                 type,
                 item.name,
                 item.system?.category,
+                item.system?.category?.value,
                 item.system?.type,
+                item.system?.type?.value,
                 item.system?.equipmentCategory,
-                item.system?.subtype
+                item.system?.equipmentCategory?.value,
+                item.system?.subtype,
+                item.system?.subtype?.value,
+                item.system?.activation?.type,
+                item.system?.activation?.type?.value,
+                item.system?.requirements
             ].filter(Boolean).join(" ").toLowerCase();
-            if (type.includes("action") || /starship\s*actions?/.test(classification)) return;
+            if (!inventoryItemTypes.has(type)) return;
+            if (type.includes("action") || /starship\s*actions?|starshipaction/.test(classification)) return;
 
             const quantity = Number(item.system?.quantity ?? item.system?.quantity?.value ?? 1);
             const entry = {
