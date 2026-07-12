@@ -363,6 +363,48 @@
     overflow-wrap: anywhere;
 }
 
+.imperial-star-log-app .isl-vessel-inventory {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 51, 51, 0.38);
+}
+
+.imperial-star-log-app .isl-vessel-inventory-title {
+    margin-bottom: 7px;
+    color: #ffffff;
+    font-size: 0.78rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-vessel-inventory-group {
+    display: grid;
+    grid-template-columns: minmax(90px, 0.32fr) minmax(0, 1fr);
+    gap: 8px;
+    padding: 4px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.imperial-star-log-app .isl-vessel-inventory-group > span {
+    color: #ff9999;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-vessel-inventory-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 8px;
+    color: #ffffff;
+    overflow-wrap: anywhere;
+}
+
+.imperial-star-log-app .isl-vessel-inventory-items span:not(:last-child)::after {
+    content: "/";
+    margin-left: 8px;
+    color: #ff3333;
+}
+
 .imperial-star-log-app .isl-warning-text {
     color: #ffd24a;
 }

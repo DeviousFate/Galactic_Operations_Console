@@ -3234,6 +3234,53 @@
         return formatVesselValue(getFirstVesselValue(actor, paths));
     }
 
+    function getVesselInventory(actor) {
+        const inventory = {
+            weapons: [],
+            systems: [],
+            modifications: []
+        };
+        const supportedSystemTypes = new Set([
+            "equipment",
+            "tool",
+            "system",
+            "component",
+            "gadget",
+            "feature",
+            "feat",
+            "installation"
+        ]);
+
+        Array.from(actor?.items?.contents ?? actor?.items ?? []).forEach((item) => {
+            const type = String(item.type ?? "").trim().toLowerCase();
+            const classification = [
+                type,
+                item.system?.category,
+                item.system?.type,
+                item.system?.equipmentCategory,
+                item.system?.subtype
+            ].filter(Boolean).join(" ").toLowerCase();
+            const quantity = Number(item.system?.quantity ?? item.system?.quantity?.value ?? 1);
+            const entry = {
+                name: item.name,
+                quantity: Number.isFinite(quantity) && quantity > 1 ? quantity : null
+            };
+
+            if (/weapon|cannon|turret|launcher|battery|blaster/.test(classification)) {
+                inventory.weapons.push(entry);
+            } else if (/modification|upgrade|enhancement|\bmod\b/.test(classification)) {
+                inventory.modifications.push(entry);
+            } else if (supportedSystemTypes.has(type) || /system|engine|drive|sensor|shield|computer|transponder|communications/.test(classification)) {
+                inventory.systems.push(entry);
+            }
+        });
+
+        Object.values(inventory).forEach((entries) => {
+            entries.sort((left, right) => left.name.localeCompare(right.name));
+        });
+        return inventory;
+    }
+
     function getPrimaryVesselTemplateData() {
         const actor = getPrimaryVesselActor();
         if (!actor) {
@@ -3289,7 +3336,8 @@
             name: actor.name,
             image: actor.img ?? "",
             type: String(actor.type ?? "Vehicle"),
-            stats
+            stats,
+            inventory: getVesselInventory(actor)
         };
     }
 
@@ -3334,19 +3382,57 @@
             status.className = "isl-vessel-stat-empty";
             status.textContent = "No compatible vessel telemetry fields are populated on this actor sheet.";
             readout.append(status);
-            return;
+        } else {
+            const stats = document.createElement("dl");
+            stats.className = "isl-vessel-stats";
+            vessel.stats.forEach(([label, value]) => {
+                const term = document.createElement("dt");
+                term.textContent = label;
+                const detail = document.createElement("dd");
+                detail.textContent = value;
+                stats.append(term, detail);
+            });
+            readout.append(stats);
         }
 
-        const stats = document.createElement("dl");
-        stats.className = "isl-vessel-stats";
-        vessel.stats.forEach(([label, value]) => {
-            const term = document.createElement("dt");
-            term.textContent = label;
-            const detail = document.createElement("dd");
-            detail.textContent = value;
-            stats.append(term, detail);
+        renderVesselInventory(readout, vessel.inventory);
+    }
+
+    function renderVesselInventory(readout, inventory) {
+        const inventoryReadout = document.createElement("section");
+        inventoryReadout.className = "isl-vessel-inventory";
+        const heading = document.createElement("div");
+        heading.className = "isl-vessel-inventory-title";
+        heading.textContent = "Inventory Telemetry";
+        inventoryReadout.append(heading);
+
+        const groups = [
+            ["Weapons", inventory.weapons],
+            ["Systems", inventory.systems],
+            ["Modifications", inventory.modifications]
+        ];
+        groups.forEach(([label, entries]) => {
+            const group = document.createElement("div");
+            group.className = "isl-vessel-inventory-group";
+            const groupLabel = document.createElement("span");
+            groupLabel.textContent = label;
+            const itemList = document.createElement("div");
+            itemList.className = "isl-vessel-inventory-items";
+
+            if (!entries.length) {
+                itemList.textContent = "None recorded";
+            } else {
+                entries.forEach((entry) => {
+                    const item = document.createElement("span");
+                    item.textContent = entry.quantity ? `${entry.name} x${entry.quantity}` : entry.name;
+                    itemList.append(item);
+                });
+            }
+
+            group.append(groupLabel, itemList);
+            inventoryReadout.append(group);
         });
-        readout.append(stats);
+        readout.append(inventoryReadout);
     }
 
     async function setPrimaryVesselFromDashboard(dashboard, actorId) {
@@ -4247,6 +4333,14 @@
         Hooks.on("deleteActor", (actor) => {
             if (actor.id === getPrimaryVesselActor()?.id) applyPrimaryVesselToOpenDashboards();
         });
+
+        const refreshPrimaryVesselInventory = (item) => {
+            const actor = item?.actor ?? item?.parent;
+            if (actor?.id === getPrimaryVesselActor()?.id) applyPrimaryVesselToOpenDashboards();
+        };
+        Hooks.on("createItem", refreshPrimaryVesselInventory);
+        Hooks.on("updateItem", refreshPrimaryVesselInventory);
+        Hooks.on("deleteItem", refreshPrimaryVesselInventory);
 
         const api = {
             open: openStarLog,
