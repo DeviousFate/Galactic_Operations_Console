@@ -706,8 +706,6 @@
     let clearanceCodesPromise;
     let activeGridAlignmentEdit = null;
     let activeRouteMarkerDrag = null;
-    let activeMapPan = null;
-    let pendingMapClick = null;
     let codexStartupPlayed = false;
     let lastTransmissionPayload = null;
     const navigationClearanceKeys = new Set();
@@ -1902,7 +1900,13 @@
             normalizePlanetName,
             getDashboardMapIndicatorsHidden,
             getDashboardRestrictionTierAccess,
-            hasRestrictionTierAccess
+            hasRestrictionTierAccess,
+            moveShipTokenFromMapClick,
+            gridFromMapPointer,
+            gridToMapPoint,
+            clearPlanetMapFocus,
+            centerMapViewport,
+            cursorGridZoom: CURSOR_GRID_ZOOM
         };
     }
 
@@ -2079,92 +2083,23 @@
     }
 
     function queueMapStageClick(dashboard, event) {
-        if (event.button !== 0) return;
-        if (event.detail !== 1) return;
-        if (pendingMapClick?.timer) clearTimeout(pendingMapClick.timer);
-
-        const mapEvent = {
-            target: event.target,
-            currentTarget: event.currentTarget,
-            clientX: event.clientX,
-            clientY: event.clientY
-        };
-        const timer = setTimeout(() => {
-            if (pendingMapClick?.timer !== timer || !dashboard.isConnected) return;
-            pendingMapClick = null;
-            void moveShipTokenFromMapClick(dashboard, mapEvent);
-        }, 240);
-        pendingMapClick = { dashboard, timer };
+        return getMapUiModule().queueMapStageClick(dashboard, event, getMapUiModuleConfig());
     }
 
     function beginMapPan(dashboard, event) {
-        if (event.button !== 2) return;
-
-        const viewport = dashboard.querySelector("#isl-map-viewport");
-        const stage = event.currentTarget;
-        if (!viewport || !stage) return;
-
-        activeMapPan = {
-            dashboard,
-            viewport,
-            stage,
-            pointerId: event.pointerId,
-            startX: event.clientX,
-            startY: event.clientY,
-            scrollLeft: viewport.scrollLeft,
-            scrollTop: viewport.scrollTop
-        };
-        stage.classList.add("isl-map-panning");
-        stage.setPointerCapture?.(event.pointerId);
-        event.preventDefault();
-        event.stopPropagation();
+        return getMapUiModule().beginPan(dashboard, event);
     }
 
     function updateMapPan(event) {
-        const pan = activeMapPan;
-        if (!pan || event.pointerId !== pan.pointerId || !pan.dashboard?.isConnected) return;
-
-        pan.viewport.scrollLeft = pan.scrollLeft - (event.clientX - pan.startX);
-        pan.viewport.scrollTop = pan.scrollTop - (event.clientY - pan.startY);
-        event.preventDefault();
-        event.stopPropagation();
+        return getMapUiModule().updatePan(event);
     }
 
     function endMapPan(event) {
-        const pan = activeMapPan;
-        if (!pan || event.pointerId !== pan.pointerId) return;
-
-        if (pan.stage?.hasPointerCapture?.(event.pointerId)) pan.stage.releasePointerCapture(event.pointerId);
-        pan.stage?.classList.remove("isl-map-panning");
-        activeMapPan = null;
-        event.preventDefault();
-        event.stopPropagation();
+        return getMapUiModule().endPan(event);
     }
 
     function zoomMapAtCursorGrid(dashboard, event) {
-        if (pendingMapClick?.dashboard === dashboard && pendingMapClick.timer) {
-            clearTimeout(pendingMapClick.timer);
-            pendingMapClick = null;
-        }
-        if (event.target.closest("#isl-ship-token, #isl-route-token, #isl-grid-edit-layer")) return;
-        if (dashboard.dataset.routePlacement === "true") return;
-
-        const grid = gridFromMapPointer(event);
-        const point = gridToMapPoint(grid);
-        const viewport = dashboard.querySelector("#isl-map-viewport");
-        const stage = dashboard.querySelector("#isl-map-stage");
-        if (!grid || !point || !viewport || !stage) return;
-
-        const currentZoom = Number.parseFloat(stage.style.getPropertyValue("--isl-map-focus-zoom")) || 100;
-        if (currentZoom > 100) {
-            clearPlanetMapFocus(dashboard);
-            event.preventDefault();
-            return;
-        }
-
-        stage.style.setProperty("--isl-map-focus-zoom", `${CURSOR_GRID_ZOOM}%`);
-        centerMapViewport(viewport, stage, point);
-        event.preventDefault();
+        return getMapUiModule().zoomAtCursorGrid(dashboard, event, getMapUiModuleConfig());
     }
 
     async function moveShipTokenFromMapClick(dashboard, event) {

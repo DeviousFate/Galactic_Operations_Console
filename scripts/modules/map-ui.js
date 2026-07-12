@@ -2,6 +2,8 @@
     "use strict";
 
     const modules = globalThis.GalacticOperationsConsoleModules ??= {};
+    let activePan = null;
+    let pendingMapClick = null;
 
     modules.mapUi = {
         renderGridOverlay(dashboard, calibration, config) {
@@ -77,6 +79,91 @@
             const column = config.gridColumns[Math.floor(relativeX * config.gridColumns.length)];
             const row = Math.floor(relativeY * calibration.rows) + 1;
             return column ? `${column}${row}` : "";
+        },
+
+        queueMapStageClick(dashboard, event, config) {
+            if (event.button !== 0 || event.detail !== 1) return;
+            if (pendingMapClick?.timer) clearTimeout(pendingMapClick.timer);
+
+            const mapEvent = {
+                target: event.target,
+                currentTarget: event.currentTarget,
+                clientX: event.clientX,
+                clientY: event.clientY
+            };
+            const timer = setTimeout(() => {
+                if (pendingMapClick?.timer !== timer || !dashboard.isConnected) return;
+                pendingMapClick = null;
+                void config.moveShipTokenFromMapClick(dashboard, mapEvent);
+            }, 240);
+            pendingMapClick = { dashboard, timer };
+        },
+
+        beginPan(dashboard, event) {
+            if (event.button !== 2) return;
+            const viewport = dashboard.querySelector("#isl-map-viewport");
+            const stage = event.currentTarget;
+            if (!viewport || !stage) return;
+
+            activePan = {
+                dashboard,
+                viewport,
+                stage,
+                pointerId: event.pointerId,
+                startX: event.clientX,
+                startY: event.clientY,
+                scrollLeft: viewport.scrollLeft,
+                scrollTop: viewport.scrollTop
+            };
+            stage.classList.add("isl-map-panning");
+            stage.setPointerCapture?.(event.pointerId);
+            event.preventDefault();
+            event.stopPropagation();
+        },
+
+        updatePan(event) {
+            const pan = activePan;
+            if (!pan || event.pointerId !== pan.pointerId || !pan.dashboard?.isConnected) return;
+            pan.viewport.scrollLeft = pan.scrollLeft - (event.clientX - pan.startX);
+            pan.viewport.scrollTop = pan.scrollTop - (event.clientY - pan.startY);
+            event.preventDefault();
+            event.stopPropagation();
+        },
+
+        endPan(event) {
+            const pan = activePan;
+            if (!pan || event.pointerId !== pan.pointerId) return;
+            if (pan.stage?.hasPointerCapture?.(event.pointerId)) pan.stage.releasePointerCapture(event.pointerId);
+            pan.stage?.classList.remove("isl-map-panning");
+            activePan = null;
+            event.preventDefault();
+            event.stopPropagation();
+        },
+
+        zoomAtCursorGrid(dashboard, event, config) {
+            if (pendingMapClick?.dashboard === dashboard && pendingMapClick.timer) {
+                clearTimeout(pendingMapClick.timer);
+                pendingMapClick = null;
+            }
+            if (event.target.closest("#isl-ship-token, #isl-route-token, #isl-grid-edit-layer")) return;
+            if (dashboard.dataset.routePlacement === "true") return;
+
+            const grid = config.gridFromMapPointer(event);
+            const point = config.gridToMapPoint(grid);
+            const viewport = dashboard.querySelector("#isl-map-viewport");
+            const stage = dashboard.querySelector("#isl-map-stage");
+            if (!grid || !point || !viewport || !stage) return;
+
+            const currentZoom = Number.parseFloat(stage.style.getPropertyValue("--isl-map-focus-zoom")) || 100;
+            if (currentZoom > 100) {
+                config.clearPlanetMapFocus(dashboard);
+                event.preventDefault();
+                return;
+            }
+
+            stage.style.setProperty("--isl-map-focus-zoom", `${config.cursorGridZoom}%`);
+            config.centerMapViewport(viewport, stage, point);
+            event.preventDefault();
         }
     };
 
