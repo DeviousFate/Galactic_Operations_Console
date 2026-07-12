@@ -703,8 +703,6 @@
     let gridCoordinateByGrid = {};
     let gridRegionByGrid = {};
     let gridRegionCoordinates = [];
-    let warningDefinitionsPromise;
-    let isdNamesPromise;
     let clearanceCodesPromise;
     let activeGridAlignmentEdit = null;
     let activeRouteMarkerDrag = null;
@@ -3661,205 +3659,35 @@
         else delete status.dataset.state;
     }
 
-    async function loadWarningDefinitions() {
-        if (!warningDefinitionsPromise) {
-            warningDefinitionsPromise = fetch(warningDefinitionsPath)
-                .then((response) => {
-                    if (!response.ok) throw new Error(`Unable to load warning protocols (${response.status}).`);
-                    return response.text();
-                })
-                .then(parseWarningDefinitions)
-                .catch((error) => {
-                    console.error(`${MODULE_ID} | Failed to load warning protocols`, error);
-                    warningDefinitionsPromise = null;
-                    return [];
-                });
-        }
-
-        return warningDefinitionsPromise;
+    function getWarningsModule() {
+        const warningsModule = globalThis.GalacticOperationsConsoleModules?.warnings;
+        if (!warningsModule) throw new Error(`${MODULE_ID} | Warnings module was not loaded.`);
+        return warningsModule;
     }
 
-    async function loadIsdNames() {
-        if (!isdNamesPromise) {
-            isdNamesPromise = fetch(isdNamesPath)
-                .then((response) => {
-                    if (!response.ok) throw new Error(`Unable to load ISD names (${response.status}).`);
-                    return response.text();
-                })
-                .then((text) => text.split(/\r?\n/).map((name) => name.trim()).filter(Boolean))
-                .catch((error) => {
-                    console.error(`${MODULE_ID} | Failed to load ISD names`, error);
-                    isdNamesPromise = null;
-                    return [];
-                });
-        }
-
-        return isdNamesPromise;
-    }
-
-    function parseWarningDefinitions(text) {
-        return String(text ?? "")
-            .split(/(?=^Grade\s+[1-5]:)/m)
-            .map((section) => section.trim())
-            .filter(Boolean)
-            .map((section) => {
-                const header = section.match(/^Grade\s+([1-5]):\s*(.+)$/m);
-                const systems = section.match(/(?:\r?\n){2}([^\r\n]+)(?:\r?\n){2}Protocol:/)?.[1]
-                    ?.split(",")
-                    .map((system) => system.trim())
-                    .filter(Boolean) || [];
-                const transmissions = [];
-                const transmissionPattern = /(?:^|(?:\r?\n){2})([A-Z][^\r\n]*?):[ \t]*(?:\r?\n){2}([\s\S]*?)(?=(?:\r?\n){2}[A-Z][^\r\n]*?:[ \t]*(?:\r?\n){2}|$)/g;
-                let match;
-
-                while ((match = transmissionPattern.exec(section))) {
-                    transmissions.push({
-                        title: match[1].trim(),
-                        message: match[2].trim().replace(/^["\u201c]+/, "").replace(/["\u201d]+$/, "").trim()
-                    });
-                }
-
-                return header && systems.length && transmissions.length
-                    ? {
-                        grade: Number(header[1]),
-                        label: header[2].trim(),
-                        systems,
-                        transmissions
-                    }
-                    : null;
-            })
-            .filter(Boolean);
-    }
-
-    async function getWarningDefinitionForSystem(system) {
-        const definitions = await loadWarningDefinitions();
-        const normalizedSystem = normalizePlanetName(system);
-        const exactMatch = definitions.find((definition) => definition.systems.some((entry) => (
-            normalizePlanetName(entry) === normalizedSystem
-        )));
-        if (exactMatch) return exactMatch;
-
-        const restriction = restrictionTierByPlanetName[normalizedSystem];
-        return restriction
-            ? definitions.find((definition) => definition.grade === restriction.tier.id) || null
-            : null;
-    }
-
-    function selectFirstVisitWarningTransmission(definition) {
-        return definition.transmissions.find((transmission) => /automated/i.test(transmission.title))
-            || definition.transmissions[0]
-            || null;
-    }
-
-    function selectManualWarningTransmission(definition) {
-        return definition.transmissions.find((transmission) => /live/i.test(transmission.title))
-            || definition.transmissions[0]
-            || null;
-    }
-
-    async function createSystemWarningPayload(definition, system, grid, transmission, trigger) {
-        if (!definition || !transmission) return null;
-
-        const isLive = /\blive\b/i.test(transmission.title);
-        const isdNames = definition.grade === 3 ? await loadIsdNames() : [];
-        const isdName = isdNames.length ? isdNames[Math.floor(Math.random() * isdNames.length)] : "Unidentified Star Destroyer";
-        const message = formatSystemWarningMessage(transmission.message, system, isdName);
-
+    function getWarningsModuleConfig() {
         return {
-            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-            grade: definition.grade,
-            label: definition.label,
-            system: String(system ?? "").trim() || "Unknown System",
-            grid: normalizeGrid(grid),
-            transmissionTitle: transmission.title,
-            message,
-            isLive,
-            isdName: definition.grade === 3 ? isdName : "",
-            trigger,
-            timestamp: Date.now()
+            moduleId: MODULE_ID,
+            warningDefinitionsPath,
+            isdNamesPath,
+            warningVisitsSettingKey: WARNING_SYSTEM_VISITS_SETTING_KEY,
+            restrictionTierByPlanetName,
+            defaultShipTransponder: DEFAULT_SHIP_TRANSPONDER,
+            normalizePlanetName,
+            normalizeGrid,
+            normalizeLiveState,
+            getLiveState,
+            transmit: transmitSystemWarning,
+            setStatus: setWarningStatus
         };
     }
 
-    function formatSystemWarningMessage(message, system, isdName) {
-        const orbitalYards = normalizePlanetName(system) === "KUAT" ? "Kuat Drive Yards" : "Fondor Ship Yards";
-
-        return String(message ?? "")
-            .replace(/\(Read Ship Transponder or if N\/A use default 'Unidentified Vessel'\)/gi, DEFAULT_SHIP_TRANSPONDER)
-            .replace(/\(Insert ISD Name\)/gi, isdName)
-            .replace(/\(Kuat Drive or Fondor Ship\) Yards/gi, orbitalYards);
-    }
-
-    function getWarningSystemVisits() {
-        try {
-            const visits = game.settings.get(MODULE_ID, WARNING_SYSTEM_VISITS_SETTING_KEY);
-            return visits && typeof visits === "object" ? visits : {};
-        } catch (error) {
-            return {};
-        }
-    }
-
-    async function claimFirstWarningSystemVisit(system) {
-        if (!game.user?.isGM) return false;
-
-        const key = normalizePlanetName(system);
-        if (!key) return false;
-
-        const visits = getWarningSystemVisits();
-        if (visits[key]) return false;
-
-        await game.settings.set(MODULE_ID, WARNING_SYSTEM_VISITS_SETTING_KEY, {
-            ...visits,
-            [key]: Date.now()
-        });
-        return true;
-    }
-
     async function triggerFirstTimeSystemWarning(state) {
-        if (!game.user?.isGM) return;
-
-        const liveState = normalizeLiveState(state);
-        const definition = await getWarningDefinitionForSystem(liveState.location);
-        if (!definition || !(await claimFirstWarningSystemVisit(liveState.location))) return;
-
-        const payload = await createSystemWarningPayload(
-            definition,
-            liveState.location,
-            liveState.shipGrid,
-            selectFirstVisitWarningTransmission(definition),
-            "first-visit"
-        );
-        if (payload) await transmitSystemWarning(payload);
+        return getWarningsModule().triggerFirstVisit(state, getWarningsModuleConfig());
     }
 
     async function triggerManualWarningGrade(dashboard, rawGrade) {
-        if (!game.user?.isGM) {
-            setWarningStatus(dashboard, "GM clearance required to transmit warning protocols.", "error");
-            return;
-        }
-
-        const grade = Number.parseInt(rawGrade, 10);
-        const definitions = await loadWarningDefinitions();
-        const definition = definitions.find((entry) => entry.grade === grade);
-        if (!definition) {
-            setWarningStatus(dashboard, `Grade ${rawGrade} warning protocol unavailable.`, "error");
-            return;
-        }
-
-        const liveState = getLiveState();
-        const payload = await createSystemWarningPayload(
-            definition,
-            liveState.location,
-            liveState.shipGrid,
-            selectManualWarningTransmission(definition),
-            "manual"
-        );
-        if (!payload) {
-            setWarningStatus(dashboard, `Grade ${grade} warning protocol unavailable.`, "error");
-            return;
-        }
-
-        await transmitSystemWarning(payload);
-        setWarningStatus(dashboard, `Grade ${grade} warning transmitted.`, "");
+        return getWarningsModule().triggerManualGrade(dashboard, rawGrade, getWarningsModuleConfig());
     }
 
     async function transmitSystemWarning(payload) {
