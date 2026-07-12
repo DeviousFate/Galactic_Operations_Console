@@ -710,9 +710,6 @@
     let pendingMapClick = null;
     let codexStartupPlayed = false;
     let lastTransmissionPayload = null;
-    let majorHyperlaneNodesCache;
-    let majorHyperlaneConnectionsCache;
-    const majorHyperlaneRouteCache = new Map();
     const navigationClearanceKeys = new Set();
 
     function getTemplateData() {
@@ -2839,173 +2836,32 @@
         };
     }
 
-    function normalizeHyperlaneNode(value) {
-        const normalized = normalizePlanetName(value).replace(/[\u2018\u2019']/g, "");
-        return HYPERLANE_NODE_ALIASES[normalized] || normalized;
+    function getNavRoutingModule() {
+        const navRoutingModule = globalThis.GalacticOperationsConsoleModules?.navRouting;
+        if (!navRoutingModule) throw new Error(`${MODULE_ID} | Nav-routing module was not loaded.`);
+        return navRoutingModule;
+    }
+
+    function getNavRoutingModuleConfig() {
+        return {
+            hyperlanes: MAJOR_GALACTIC_HYPERLANES,
+            aliases: HYPERLANE_NODE_ALIASES,
+            adjacentGridDistance: HYPERLANE_ADJACENT_GRID_DISTANCE,
+            normalizePlanetName,
+            normalizeGrid,
+            parseGrid: parseAstroNavGrid,
+            calculateGridTransit: calculateAstroNavGridTransit,
+            getGridRegion: getAstroNavGridRegion,
+            mergeGridPaths: mergeAstroNavGridPaths
+        };
     }
 
     function findMajorHyperlaneRoute(origin, destination) {
-        const originNode = normalizeHyperlaneNode(origin?.name);
-        const destinationNode = normalizeHyperlaneNode(destination?.name);
-        return findMajorHyperlaneRouteByNode(originNode, destinationNode);
+        return getNavRoutingModule().findDirect(origin, destination, getNavRoutingModuleConfig());
     }
 
-    function findMajorHyperlaneRouteByNode(originNode, destinationNode) {
-        if (!originNode || !destinationNode || originNode === destinationNode) return null;
-
-        const cacheKey = `${originNode}|${destinationNode}`;
-        if (majorHyperlaneRouteCache.has(cacheKey)) return majorHyperlaneRouteCache.get(cacheKey);
-
-        const connections = getMajorHyperlaneConnections();
-
-        const distances = new Map([[originNode, 0]]);
-        const routes = new Map([[originNode, { legs: [], grids: [] }]]);
-        const pending = [{ node: originNode, hours: 0 }];
-
-        while (pending.length) {
-            pending.sort((left, right) => left.hours - right.hours);
-            const current = pending.shift();
-            if (!current || current.hours !== distances.get(current.node)) continue;
-            if (current.node === destinationNode) break;
-
-            (connections.get(current.node) || []).forEach((edge) => {
-                const totalHours = current.hours + edge.hours;
-                if (totalHours >= (distances.get(edge.to) ?? Infinity)) return;
-
-                const previousRoute = routes.get(current.node) || { legs: [], grids: [] };
-                distances.set(edge.to, totalHours);
-                routes.set(edge.to, {
-                    legs: [...previousRoute.legs, edge],
-                    grids: [...previousRoute.grids, edge.fromGrid, edge.toGrid]
-                });
-                pending.push({ node: edge.to, hours: totalHours });
-            });
-        }
-
-        const route = routes.get(destinationNode);
-        const hours = distances.get(destinationNode);
-        if (!route?.legs.length || !Number.isFinite(hours)) {
-            majorHyperlaneRouteCache.set(cacheKey, null);
-            return null;
-        }
-
-        const laneIds = [...new Set(route.legs.map((edge) => edge.lane.id))];
-        const laneNames = [...new Set(route.legs.map((edge) => `${edge.lane.id} ${edge.lane.name}`))];
-        const result = {
-            hours,
-            legs: route.legs,
-            grids: route.grids.filter((grid, index, values) => grid && (index === 0 || values[index - 1] !== grid)),
-            laneIds,
-            laneNames
-        };
-        majorHyperlaneRouteCache.set(cacheKey, result);
-        return result;
-    }
-
-    function getMajorHyperlaneConnections() {
-        if (majorHyperlaneConnectionsCache) return majorHyperlaneConnectionsCache;
-
-        const connections = new Map();
-        const connect = (from, to, hours, lane, fromGrid, toGrid) => {
-            const edge = { from, to, hours, lane, fromGrid, toGrid };
-            const edges = connections.get(from) || [];
-            edges.push(edge);
-            connections.set(from, edges);
-        };
-
-        MAJOR_GALACTIC_HYPERLANES.forEach((lane) => {
-            lane.legs.forEach(([fromName, fromGrid, toName, toGrid, hours]) => {
-                const from = normalizeHyperlaneNode(fromName);
-                const to = normalizeHyperlaneNode(toName);
-                connect(from, to, hours, lane, normalizeGrid(fromGrid), normalizeGrid(toGrid));
-                connect(to, from, hours, lane, normalizeGrid(toGrid), normalizeGrid(fromGrid));
-            });
-        });
-
-        majorHyperlaneConnectionsCache = connections;
-        return connections;
-    }
-
-    function getMajorHyperlaneNodes() {
-        if (majorHyperlaneNodesCache) return majorHyperlaneNodesCache;
-
-        const nodes = new Map();
-        const addNode = (name, grid) => {
-            const node = normalizeHyperlaneNode(name);
-            const normalizedGrid = normalizeGrid(grid);
-            if (!node || !normalizedGrid || nodes.has(node)) return;
-            nodes.set(node, { node, grid: normalizedGrid });
-        };
-
-        MAJOR_GALACTIC_HYPERLANES.forEach((lane) => {
-            lane.legs.forEach(([fromName, fromGrid, toName, toGrid]) => {
-                addNode(fromName, fromGrid);
-                addNode(toName, toGrid);
-            });
-        });
-
-        majorHyperlaneNodesCache = [...nodes.values()];
-        return majorHyperlaneNodesCache;
-    }
-
-    function findAdjacentMajorHyperlaneRoute(gridRoute, origin, destination, { avoidRestricted = false } = {}) {
-        const routeCoordinates = gridRoute.map((grid) => parseAstroNavGrid(grid)).filter(Boolean);
-        if (routeCoordinates.length < 2 || !origin.coordinate || !destination.coordinate) return null;
-
-        const accessNodes = getMajorHyperlaneNodes().filter((node) => {
-            const nodeCoordinate = parseAstroNavGrid(node.grid);
-            return nodeCoordinate && routeCoordinates.some((routeCoordinate) => (
-                Math.abs(routeCoordinate.column - nodeCoordinate.column) <= HYPERLANE_ADJACENT_GRID_DISTANCE
-                && Math.abs(routeCoordinate.row - nodeCoordinate.row) <= HYPERLANE_ADJACENT_GRID_DISTANCE
-            ));
-        });
-
-        const approaches = new Map(accessNodes.map((entry) => [
-            entry.node,
-            calculateAstroNavGridTransit(origin, buildMajorHyperlaneAccessTarget(entry, origin.region), { avoidRestricted })
-        ]));
-        const departures = new Map(accessNodes.map((entry) => [
-            entry.node,
-            calculateAstroNavGridTransit(buildMajorHyperlaneAccessTarget(entry, destination.region), destination, { avoidRestricted })
-        ]));
-        let bestRoute = null;
-        accessNodes.forEach((entry) => {
-            accessNodes.forEach((exit) => {
-                if (entry.node === exit.node) return;
-                const laneRoute = findMajorHyperlaneRouteByNode(entry.node, exit.node);
-                if (!laneRoute) return;
-
-                const approach = approaches.get(entry.node);
-                const departure = departures.get(exit.node);
-                if (!Number.isFinite(approach.hours) || !Number.isFinite(departure.hours)) return;
-
-                const hours = approach.hours + laneRoute.hours + departure.hours;
-                if (bestRoute && hours >= bestRoute.hours) return;
-
-                bestRoute = {
-                    ...laneRoute,
-                    hours,
-                    laneHours: laneRoute.hours,
-                    access: {
-                        entryGrid: entry.grid,
-                        exitGrid: exit.grid
-                    },
-                    grids: mergeAstroNavGridPaths(approach.grids, laneRoute.grids, departure.grids)
-                };
-            });
-        });
-
-        return bestRoute;
-    }
-
-    function buildMajorHyperlaneAccessTarget(node, fallbackRegion) {
-        const coordinate = parseAstroNavGrid(node.grid);
-        return {
-            name: node.node,
-            grid: node.grid,
-            coordinate,
-            region: getAstroNavGridRegion(node.grid, fallbackRegion)
-        };
+    function findAdjacentMajorHyperlaneRoute(gridRoute, origin, destination, options = {}) {
+        return getNavRoutingModule().findAdjacent(gridRoute, origin, destination, options, getNavRoutingModuleConfig());
     }
 
     function calculateAstroNavGridTransit(origin, destination, { avoidRestricted = false } = {}) {

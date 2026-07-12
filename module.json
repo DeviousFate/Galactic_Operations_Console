@@ -17,6 +17,7 @@
     "scripts/modules/startup-sequence.js",
     "scripts/modules/journals.js",
     "scripts/modules/warnings.js",
+    "scripts/modules/nav-routing.js",
     "scripts/imperial-star-log.js"
   ],
   "styles": [
