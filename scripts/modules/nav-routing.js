@@ -50,7 +50,7 @@
                         hours,
                         laneHours: laneRoute.hours,
                         access: { entryGrid: entry.grid, exitGrid: exit.grid },
-                        grids: mergeGridPaths([approach.grids, laneRoute.grids, departure.grids], config)
+                        grids: expandGridRoute(mergeGridPaths([approach.grids, laneRoute.grids, departure.grids], config), config)
                     };
                 });
             });
@@ -276,7 +276,7 @@
             hours: approach.hours + laneRoute.hours + departure.hours,
             laneHours: laneRoute.hours,
             access: { entryGrid: entry.grid, exitGrid: exit.grid },
-            grids: mergeGridPaths([approach.grids, laneRoute.grids, departure.grids], config)
+            grids: expandGridRoute(mergeGridPaths([approach.grids, laneRoute.grids, departure.grids], config), config)
         };
     }
 

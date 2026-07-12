@@ -65,6 +65,26 @@ test("includes approach and departure grids in a major hyperlane transit", () =>
     assert.deepEqual(transit.grids, ["A2", "A1", "B1", "C1", "C2"]);
 });
 
+test("expands major hyperlane waypoints into the traversed grid path", () => {
+    const transit = routing.buildMajorRouteTransit({
+        hours: 5,
+        legs: [{ from: "A", fromGrid: "A1", to: "C", toGrid: "C3" }],
+        grids: ["A1", "C3"]
+    }, {
+        name: "A",
+        grid: "A1",
+        coordinate: parseGrid("A1"),
+        region: "Core"
+    }, {
+        name: "C",
+        grid: "C3",
+        coordinate: parseGrid("C3"),
+        region: "Core"
+    }, {}, config);
+
+    assert.deepEqual(transit.grids, ["A1", "B2", "C3"]);
+});
+
 test("avoids a restricted grid when plotting an avoid-restricted route", () => {
     const route = routing.buildGridRoute(parseGrid("A1"), parseGrid("C1"), { avoidRestricted: true }, config);
     assert.equal(route.includes("B1"), false);
