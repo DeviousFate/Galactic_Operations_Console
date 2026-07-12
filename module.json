@@ -14,18 +14,7 @@
   },
   "socket": true,
   "scripts": [
-    "scripts/modules/startup-sequence.js",
-    "scripts/modules/station-data.js",
-    "scripts/modules/journals.js",
-    "scripts/modules/warnings.js",
-    "scripts/modules/nav-routing.js",
-    "scripts/modules/map-ui.js",
-    "scripts/modules/state-sync.js",
-    "scripts/modules/navdata.js",
-    "scripts/modules/planet-intel.js",
-    "scripts/modules/mission-control.js",
-    "scripts/modules/clearance.js",
-    "scripts/imperial-star-log.js"
+    "scripts/galactic-operations-console.js"
   ],
   "styles": [
     "styles/imperial-star-log.css"
