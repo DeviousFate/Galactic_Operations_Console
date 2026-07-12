@@ -2850,9 +2850,14 @@
             normalizePlanetName,
             normalizeGrid,
             parseGrid: parseAstroNavGrid,
+            formatGrid: formatAstroNavGrid,
             calculateGridTransit: calculateAstroNavGridTransit,
+            buildGridSegments: buildAstroNavGridSegments,
             getGridRegion: getAstroNavGridRegion,
-            mergeGridPaths: mergeAstroNavGridPaths
+            restrictedEntries: restrictedGridEntries,
+            restrictedEntryByGrid,
+            hasRestrictionTierAccess,
+            hasNavigationClearance
         };
     }
 
@@ -2864,192 +2869,44 @@
         return getNavRoutingModule().findAdjacent(gridRoute, origin, destination, options, getNavRoutingModuleConfig());
     }
 
-    function calculateAstroNavGridTransit(origin, destination, { avoidRestricted = false } = {}) {
-        if (!origin.coordinate || !destination.coordinate) return { hours: Infinity, grids: [] };
-        if (origin.grid === destination.grid) return { hours: 0, grids: [origin.grid] };
-
-        const grids = buildAstroNavGridRoute(origin.coordinate, destination.coordinate, { avoidRestricted });
-        if (!grids.length) return { hours: Infinity, grids: [] };
-        const hours = buildAstroNavGridSegments(grids, origin, destination)
-            .reduce((total, segment) => total + segment.hours, 0);
-        return { hours, grids };
+    function calculateAstroNavGridTransit(origin, destination, options = {}) {
+        return getNavRoutingModule().calculateGridTransit(origin, destination, options, getNavRoutingModuleConfig());
     }
 
     function mergeAstroNavGridPaths(...paths) {
-        return paths.flat().map(normalizeGrid).filter((grid, index, values) => (
-            grid && (index === 0 || values[index - 1] !== grid)
-        ));
+        return getNavRoutingModule().mergeGridPaths(paths, getNavRoutingModuleConfig());
     }
 
-    function buildAstroNavGridRoute(originCoordinate, destinationCoordinate, { avoidRestricted = false } = {}) {
-        const directRoute = buildDirectAstroNavGridRoute(originCoordinate, destinationCoordinate);
-        if (!avoidRestricted || directRoute.length < 3) return directRoute;
-
-        const restrictedTransit = getAstroNavRestrictedGridEntries(directRoute, {
-            ignoredGrids: [originCoordinate.grid, destinationCoordinate.grid]
-        });
-        if (!restrictedTransit.length) return directRoute;
-
-        return buildAstroNavRestrictedGridAvoidanceRoute(originCoordinate, destinationCoordinate);
+    function buildAstroNavGridRoute(originCoordinate, destinationCoordinate, options = {}) {
+        return getNavRoutingModule().buildGridRoute(originCoordinate, destinationCoordinate, options, getNavRoutingModuleConfig());
     }
 
-    function buildDirectAstroNavGridRoute(originCoordinate, destinationCoordinate) {
-        const colDelta = destinationCoordinate.column - originCoordinate.column;
-        const rowDelta = destinationCoordinate.row - originCoordinate.row;
-        const steps = Math.max(Math.abs(colDelta), Math.abs(rowDelta));
-        if (!steps) return [originCoordinate.grid];
-
-        const route = [];
-        for (let index = 0; index <= steps; index += 1) {
-            const column = Math.round(originCoordinate.column + ((colDelta * index) / steps));
-            const row = Math.round(originCoordinate.row + ((rowDelta * index) / steps));
-            const grid = formatAstroNavGrid(column, row);
-            if (grid && route[route.length - 1] !== grid) route.push(grid);
-        }
-
-        return route;
+    function getAstroNavRestrictedGridEntries(gridRoute, options = {}) {
+        return getNavRoutingModule().getRestrictedEntries(gridRoute, options, getNavRoutingModuleConfig());
     }
 
-    function buildAstroNavRestrictedGridAvoidanceRoute(originCoordinate, destinationCoordinate) {
-        const originGrid = originCoordinate.grid;
-        const destinationGrid = destinationCoordinate.grid;
-        const blockedGrids = new Set(restrictedGridEntries.map((entry) => entry.grid));
-        blockedGrids.delete(originGrid);
-        blockedGrids.delete(destinationGrid);
-
-        const previous = new Map();
-        const visited = new Set([originGrid]);
-        const pending = [originGrid];
-        let cursor = 0;
-
-        while (cursor < pending.length) {
-            const currentGrid = pending[cursor];
-            cursor += 1;
-            if (currentGrid === destinationGrid) break;
-
-            const coordinate = parseAstroNavGrid(currentGrid);
-            if (!coordinate) continue;
-
-            getAstroNavGridNeighbors(coordinate).forEach((neighbor) => {
-                if (blockedGrids.has(neighbor) || visited.has(neighbor)) return;
-
-                visited.add(neighbor);
-                previous.set(neighbor, currentGrid);
-                pending.push(neighbor);
-            });
-        }
-
-        if (!visited.has(destinationGrid)) return [];
-
-        const route = [];
-        let grid = destinationGrid;
-        while (grid) {
-            route.unshift(grid);
-            grid = previous.get(grid);
-        }
-
-        return route;
-    }
-
-    function getAstroNavGridNeighbors(coordinate) {
-        const neighbors = [];
-
-        for (let columnOffset = -1; columnOffset <= 1; columnOffset += 1) {
-            for (let rowOffset = -1; rowOffset <= 1; rowOffset += 1) {
-                if (!columnOffset && !rowOffset) continue;
-
-                const grid = formatAstroNavGrid(coordinate.column + columnOffset, coordinate.row + rowOffset);
-                if (grid) neighbors.push(grid);
-            }
-        }
-
-        return neighbors;
-    }
-
-    function getAstroNavRestrictedGridEntries(gridRoute, { ignoredGrids = [] } = {}) {
-        const ignored = new Set(ignoredGrids.map(normalizeGrid).filter(Boolean));
-        const entries = new Map();
-
-        expandAstroNavGridRoute(gridRoute).forEach((grid) => {
-            if (ignored.has(grid)) return;
-
-            const entry = restrictedGridEntryByGrid.get(grid);
-            if (entry) entries.set(grid, entry);
-        });
-
-        return [...entries.values()];
-    }
-
-    function expandAstroNavGridRoute(gridRoute) {
-        const grids = (Array.isArray(gridRoute) ? gridRoute : [])
-            .map(normalizeGrid)
-            .filter(Boolean);
-        if (grids.length < 2) return grids;
-
-        return grids.reduce((expanded, grid, index) => {
-            if (!index) return [grid];
-
-            const from = parseAstroNavGrid(grids[index - 1]);
-            const to = parseAstroNavGrid(grid);
-            if (!from || !to) return mergeAstroNavGridPaths(expanded, [grid]);
-
-            return mergeAstroNavGridPaths(expanded, buildDirectAstroNavGridRoute(from, to));
-        }, []);
-    }
-
-    function getUnauthorizedAstroNavRestrictedTransits(gridRoute, access, { authorizedGrids = [] } = {}) {
-        const authorized = new Set(authorizedGrids.map(normalizeGrid).filter(Boolean));
-
-        return getAstroNavRestrictedGridEntries(gridRoute)
-            .map((entry) => {
-                const restrictions = entry.restrictions?.length
-                    ? entry.restrictions
-                    : [{ tier: entry.tier }];
-                const unauthorized = restrictions
-                    .filter((restriction) => !authorized.has(entry.grid) && !hasRestrictionTierAccess(restriction.tier, access))
-                    .sort((left, right) => right.tier.id - left.tier.id);
-                if (!unauthorized.length) return null;
-
-                return {
-                    grid: entry.grid,
-                    tier: unauthorized[0].tier
-                };
-            })
-            .filter(Boolean);
+    function getUnauthorizedAstroNavRestrictedTransits(gridRoute, access, options = {}) {
+        return getNavRoutingModule().getUnauthorizedRestrictedTransits(gridRoute, access, options, getNavRoutingModuleConfig());
     }
 
     function getDirectTransitClearanceTarget(gridRoute) {
-        const entry = getAstroNavRestrictedGridEntries(gridRoute).find((candidate) => {
-            const restriction = (candidate.restrictions ?? [])
-                .filter((item) => Number(item.tier?.id) >= 3)
-                .sort((left, right) => right.tier.id - left.tier.id)[0];
-            return restriction && !hasNavigationClearance({ name: restriction.planet?.name, grid: candidate.grid });
-        });
-        if (!entry) return null;
-
-        const restriction = (entry.restrictions ?? [])
-            .filter((item) => Number(item.tier?.id) >= 3)
-            .sort((left, right) => right.tier.id - left.tier.id)[0];
-        return {
-            name: restriction?.planet?.name || entry.grid,
-            grid: entry.grid
-        };
+        return getNavRoutingModule().getDirectTransitClearanceTarget(gridRoute, getNavRoutingModuleConfig());
     }
 
     function formatAstroNavDirectTransitDenial(denial) {
-        return `Direct transit denied at ${denial.grid}: Tier ${denial.tier.id} ${denial.tier.clearance} clearance required.`;
+        return getNavRoutingModule().formatDirectTransitDenial(denial);
     }
 
     function isAstroNavMajorHyperlaneRouteAvailable(route, transitMode, origin, destination, access, authorizedGrids = []) {
-        if (!route) return false;
-
-        if (transitMode === "avoid-restricted") {
-            return !getAstroNavRestrictedGridEntries(route.grids, {
-                ignoredGrids: [origin.grid, destination.grid]
-            }).length;
-        }
-
-        return !getUnauthorizedAstroNavRestrictedTransits(route.grids, access, { authorizedGrids }).length;
+        return getNavRoutingModule().isMajorRouteAvailable(
+            route,
+            transitMode,
+            origin,
+            destination,
+            access,
+            authorizedGrids,
+            getNavRoutingModuleConfig()
+        );
     }
 
     function buildAstroNavGridSegments(gridRoute, origin, destination) {

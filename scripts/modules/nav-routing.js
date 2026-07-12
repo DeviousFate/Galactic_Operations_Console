@@ -50,12 +50,58 @@
                         hours,
                         laneHours: laneRoute.hours,
                         access: { entryGrid: entry.grid, exitGrid: exit.grid },
-                        grids: config.mergeGridPaths(approach.grids, laneRoute.grids, departure.grids)
+                        grids: mergeGridPaths([approach.grids, laneRoute.grids, departure.grids], config)
                     };
                 });
             });
 
             return bestRoute;
+        },
+
+        calculateGridTransit(origin, destination, { avoidRestricted = false } = {}, config) {
+            if (!origin.coordinate || !destination.coordinate) return { hours: Infinity, grids: [] };
+            if (origin.grid === destination.grid) return { hours: 0, grids: [origin.grid] };
+
+            const grids = buildGridRoute(origin.coordinate, destination.coordinate, { avoidRestricted }, config);
+            if (!grids.length) return { hours: Infinity, grids: [] };
+            const hours = config.buildGridSegments(grids, origin, destination)
+                .reduce((total, segment) => total + segment.hours, 0);
+            return { hours, grids };
+        },
+
+        mergeGridPaths(paths, config) {
+            return mergeGridPaths(paths, config);
+        },
+
+        buildGridRoute(originCoordinate, destinationCoordinate, options = {}, config) {
+            return buildGridRoute(originCoordinate, destinationCoordinate, options, config);
+        },
+
+        getRestrictedEntries(gridRoute, options = {}, config) {
+            return getRestrictedEntries(gridRoute, options, config);
+        },
+
+        getUnauthorizedRestrictedTransits(gridRoute, access, options = {}, config) {
+            return getUnauthorizedRestrictedTransits(gridRoute, access, options, config);
+        },
+
+        getDirectTransitClearanceTarget(gridRoute, config) {
+            return getDirectTransitClearanceTarget(gridRoute, config);
+        },
+
+        formatDirectTransitDenial(denial) {
+            return `Direct transit denied at ${denial.grid}: Tier ${denial.tier.id} ${denial.tier.clearance} clearance required.`;
+        },
+
+        isMajorRouteAvailable(route, transitMode, origin, destination, access, authorizedGrids, config) {
+            if (!route) return false;
+            if (transitMode === "avoid-restricted") {
+                return !getRestrictedEntries(route.grids, {
+                    ignoredGrids: [origin.grid, destination.grid]
+                }, config).length;
+            }
+
+            return !getUnauthorizedRestrictedTransits(route.grids, access, { authorizedGrids }, config).length;
         }
     };
 
@@ -165,5 +211,138 @@
     function normalizeNode(value, config) {
         const normalized = config.normalizePlanetName(value).replace(/[\u2018\u2019']/g, "");
         return config.aliases[normalized] || normalized;
+    }
+
+    function mergeGridPaths(paths, config) {
+        return paths.flat().map(config.normalizeGrid).filter((grid, index, values) => (
+            grid && (index === 0 || values[index - 1] !== grid)
+        ));
+    }
+
+    function buildGridRoute(originCoordinate, destinationCoordinate, { avoidRestricted = false } = {}, config) {
+        const directRoute = buildDirectGridRoute(originCoordinate, destinationCoordinate, config);
+        if (!avoidRestricted || directRoute.length < 3) return directRoute;
+
+        const restrictedTransit = getRestrictedEntries(directRoute, {
+            ignoredGrids: [originCoordinate.grid, destinationCoordinate.grid]
+        }, config);
+        return restrictedTransit.length
+            ? buildRestrictedGridAvoidanceRoute(originCoordinate, destinationCoordinate, config)
+            : directRoute;
+    }
+
+    function buildDirectGridRoute(originCoordinate, destinationCoordinate, config) {
+        const colDelta = destinationCoordinate.column - originCoordinate.column;
+        const rowDelta = destinationCoordinate.row - originCoordinate.row;
+        const steps = Math.max(Math.abs(colDelta), Math.abs(rowDelta));
+        if (!steps) return [originCoordinate.grid];
+
+        const route = [];
+        for (let index = 0; index <= steps; index += 1) {
+            const column = Math.round(originCoordinate.column + ((colDelta * index) / steps));
+            const row = Math.round(originCoordinate.row + ((rowDelta * index) / steps));
+            const grid = config.formatGrid(column, row);
+            if (grid && route[route.length - 1] !== grid) route.push(grid);
+        }
+        return route;
+    }
+
+    function buildRestrictedGridAvoidanceRoute(originCoordinate, destinationCoordinate, config) {
+        const originGrid = originCoordinate.grid;
+        const destinationGrid = destinationCoordinate.grid;
+        const blockedGrids = new Set(config.restrictedEntries.map((entry) => entry.grid));
+        blockedGrids.delete(originGrid);
+        blockedGrids.delete(destinationGrid);
+
+        const previous = new Map();
+        const visited = new Set([originGrid]);
+        const pending = [originGrid];
+        let cursor = 0;
+
+        while (cursor < pending.length) {
+            const currentGrid = pending[cursor++];
+            if (currentGrid === destinationGrid) break;
+
+            const coordinate = config.parseGrid(currentGrid);
+            if (!coordinate) continue;
+            getGridNeighbors(coordinate, config).forEach((neighbor) => {
+                if (blockedGrids.has(neighbor) || visited.has(neighbor)) return;
+                visited.add(neighbor);
+                previous.set(neighbor, currentGrid);
+                pending.push(neighbor);
+            });
+        }
+
+        if (!visited.has(destinationGrid)) return [];
+        const route = [];
+        for (let grid = destinationGrid; grid; grid = previous.get(grid)) route.unshift(grid);
+        return route;
+    }
+
+    function getGridNeighbors(coordinate, config) {
+        const neighbors = [];
+        for (let columnOffset = -1; columnOffset <= 1; columnOffset += 1) {
+            for (let rowOffset = -1; rowOffset <= 1; rowOffset += 1) {
+                if (!columnOffset && !rowOffset) continue;
+                const grid = config.formatGrid(coordinate.column + columnOffset, coordinate.row + rowOffset);
+                if (grid) neighbors.push(grid);
+            }
+        }
+        return neighbors;
+    }
+
+    function getRestrictedEntries(gridRoute, { ignoredGrids = [] } = {}, config) {
+        const ignored = new Set(ignoredGrids.map(config.normalizeGrid).filter(Boolean));
+        const entries = new Map();
+        expandGridRoute(gridRoute, config).forEach((grid) => {
+            if (ignored.has(grid)) return;
+            const entry = config.restrictedEntryByGrid.get(grid);
+            if (entry) entries.set(grid, entry);
+        });
+        return [...entries.values()];
+    }
+
+    function expandGridRoute(gridRoute, config) {
+        const grids = (Array.isArray(gridRoute) ? gridRoute : []).map(config.normalizeGrid).filter(Boolean);
+        if (grids.length < 2) return grids;
+
+        return grids.reduce((expanded, grid, index) => {
+            if (!index) return [grid];
+            const from = config.parseGrid(grids[index - 1]);
+            const to = config.parseGrid(grid);
+            return !from || !to
+                ? mergeGridPaths([expanded, [grid]], config)
+                : mergeGridPaths([expanded, buildDirectGridRoute(from, to, config)], config);
+        }, []);
+    }
+
+    function getUnauthorizedRestrictedTransits(gridRoute, access, { authorizedGrids = [] } = {}, config) {
+        const authorized = new Set(authorizedGrids.map(config.normalizeGrid).filter(Boolean));
+        return getRestrictedEntries(gridRoute, {}, config)
+            .map((entry) => {
+                const restrictions = entry.restrictions?.length ? entry.restrictions : [{ tier: entry.tier }];
+                const unauthorized = restrictions
+                    .filter((restriction) => !authorized.has(entry.grid) && !config.hasRestrictionTierAccess(restriction.tier, access))
+                    .sort((left, right) => right.tier.id - left.tier.id);
+                return unauthorized.length ? { grid: entry.grid, tier: unauthorized[0].tier } : null;
+            })
+            .filter(Boolean);
+    }
+
+    function getDirectTransitClearanceTarget(gridRoute, config) {
+        const entry = getRestrictedEntries(gridRoute, {}, config).find((candidate) => {
+            const restriction = getTierThreeRestriction(candidate);
+            return restriction && !config.hasNavigationClearance({ name: restriction.planet?.name, grid: candidate.grid });
+        });
+        if (!entry) return null;
+
+        const restriction = getTierThreeRestriction(entry);
+        return { name: restriction?.planet?.name || entry.grid, grid: entry.grid };
+    }
+
+    function getTierThreeRestriction(entry) {
+        return (entry.restrictions ?? [])
+            .filter((item) => Number(item.tier?.id) >= 3)
+            .sort((left, right) => right.tier.id - left.tier.id)[0];
     }
 })();
