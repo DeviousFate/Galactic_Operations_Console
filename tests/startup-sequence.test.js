@@ -8,6 +8,7 @@ test("allocates the configured startup display window across all stages", () => 
     const config = {
         lines: ["> First line.", "> Waiting...", "> Override success."],
         accessGrantedLine: "SYSTEM ACCESS GRANTED",
+        accessGrantedAfterIndex: 2,
         inlineReplacements: { 0: "> Complete." },
         timing: {
             displayDuration: 10_000,

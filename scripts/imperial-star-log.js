@@ -441,7 +441,7 @@
         `> Connection established // frequency: ${DEFAULT_SHIP_TRANSPONDER}.`
     ];
     const CODEX_ACCESS_GRANTED_LINE = "SYSTEM ACCESS GRANTED";
-    const CODEX_STARTUP_DISPLAY_DURATION_MS = 25_000;
+    const CODEX_STARTUP_DISPLAY_DURATION_MS = 20_000;
     const CODEX_STARTUP_INITIAL_DELAY_MS = 350;
     const CODEX_STARTUP_TYPE_DELAY_MS = 18;
     const CODEX_STARTUP_ELLIPSIS_TYPE_DELAY_MS = 160;
@@ -3465,6 +3465,7 @@
         await startupSequence.play(dashboard, {
             lines: CODEX_STARTUP_LINES,
             accessGrantedLine: CODEX_ACCESS_GRANTED_LINE,
+            accessGrantedAfterIndex: 4,
             inlineReplacements: CODEX_STARTUP_INLINE_REPLACEMENTS,
             timing: {
                 displayDuration: CODEX_STARTUP_DISPLAY_DURATION_MS,

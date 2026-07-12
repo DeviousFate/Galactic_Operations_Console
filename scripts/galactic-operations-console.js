@@ -24,11 +24,13 @@
             await delay(config.timing.initialDelay);
 
             let retryLine = null;
+            let stageIndex = 0;
+            let accessGrantedShown = false;
             for (const [index, text] of config.lines.entries()) {
                 if (!dashboard.isConnected) return;
 
                 const lineStartedAt = performance.now();
-                const stageDuration = stageDurations[index];
+                const stageDuration = stageDurations[stageIndex++];
                 let outputLine = null;
                 let animation;
 
@@ -53,11 +55,23 @@
                 }
 
                 await delay(Math.max(0, stageDuration - (performance.now() - lineStartedAt)));
+
+                if (index === config.accessGrantedAfterIndex) {
+                    const grantedStartedAt = performance.now();
+                    const granted = appendLine(output, config.accessGrantedLine, config.timing, true);
+                    await granted.typing;
+                    await delay(Math.max(0, stageDurations[stageIndex++] - (performance.now() - grantedStartedAt)));
+                    accessGrantedShown = true;
+                }
             }
 
             if (!dashboard.isConnected) return;
-            const granted = appendLine(output, config.accessGrantedLine, config.timing, true);
-            await granted.typing;
+            if (!accessGrantedShown) {
+                const grantedStartedAt = performance.now();
+                const granted = appendLine(output, config.accessGrantedLine, config.timing, true);
+                await granted.typing;
+                await delay(Math.max(0, stageDurations[stageIndex++] - (performance.now() - grantedStartedAt)));
+            }
 
             await delay(Math.max(0, config.timing.displayDuration - (performance.now() - startedAt)));
             if (dashboard.isConnected) popup.classList.add("hidden");
@@ -2300,7 +2314,7 @@
         `> Connection established // frequency: ${DEFAULT_SHIP_TRANSPONDER}.`
     ];
     const CODEX_ACCESS_GRANTED_LINE = "SYSTEM ACCESS GRANTED";
-    const CODEX_STARTUP_DISPLAY_DURATION_MS = 25_000;
+    const CODEX_STARTUP_DISPLAY_DURATION_MS = 20_000;
     const CODEX_STARTUP_INITIAL_DELAY_MS = 350;
     const CODEX_STARTUP_TYPE_DELAY_MS = 18;
     const CODEX_STARTUP_ELLIPSIS_TYPE_DELAY_MS = 160;
@@ -5324,6 +5338,7 @@
         await startupSequence.play(dashboard, {
             lines: CODEX_STARTUP_LINES,
             accessGrantedLine: CODEX_ACCESS_GRANTED_LINE,
+            accessGrantedAfterIndex: 4,
             inlineReplacements: CODEX_STARTUP_INLINE_REPLACEMENTS,
             timing: {
                 displayDuration: CODEX_STARTUP_DISPLAY_DURATION_MS,
