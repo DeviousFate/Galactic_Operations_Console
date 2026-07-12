@@ -1644,6 +1644,13 @@
     color: #ff7777;
 }
 
+.imperial-star-log-app .isl-navigation-restriction-notice {
+    color: #ffcccc;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    text-transform: uppercase;
+}
+
 .imperial-star-log-app .isl-navdata-library {
     display: grid;
     gap: 6px;

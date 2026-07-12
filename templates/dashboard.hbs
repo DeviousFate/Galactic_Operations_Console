@@ -620,6 +620,24 @@
         </div>
     </div>
 
+    <div class="isl-clearance-popup hidden" id="isl-navigation-restriction-popup" role="alertdialog" aria-modal="true" aria-labelledby="isl-navigation-restriction-popup-title">
+        <div class="isl-clearance-popup-header">
+            <div>
+                <div class="isl-clearance-popup-kicker">Imperial Navigation Control</div>
+                <div class="isl-clearance-popup-title" id="isl-navigation-restriction-popup-title">Navigation Authorization Required</div>
+            </div>
+            <button class="isl-icon-button" type="button" data-action="close-navigation-restriction-popup" aria-label="Close navigation restriction advisory">X</button>
+        </div>
+        <div class="isl-clearance-popup-body">
+            <div class="isl-clearance-target" id="isl-navigation-restriction-target">Restricted destination</div>
+            <div class="isl-clearance-tier" id="isl-navigation-restriction-tier">Tier restriction</div>
+            <div class="isl-navigation-restriction-notice" id="isl-navigation-restriction-notice"></div>
+            <div class="isl-form-actions">
+                <button class="isl-action-button" type="button" data-action="close-navigation-restriction-popup">Acknowledge</button>
+            </div>
+        </div>
+    </div>
+
     <div class="isl-codex-startup hidden" id="isl-codex-startup" aria-live="polite">
         <div class="isl-codex-startup-panel">
             <div class="isl-codex-startup-layout">

@@ -788,6 +788,7 @@
         dashboard.querySelector("[data-action='close-planet-popup']")?.addEventListener("click", () => closePlanetPopup(dashboard));
         dashboard.querySelector("[data-action='close-transmission-popup']")?.addEventListener("click", () => closeTransmissionPopup(dashboard));
         dashboard.querySelector("[data-action='close-clearance-popup']")?.addEventListener("click", () => closeNavigationClearancePopup(dashboard));
+        dashboard.querySelector("[data-action='close-navigation-restriction-popup']")?.addEventListener("click", () => closeNavigationRestrictionPopup(dashboard));
         dashboard.querySelectorAll("[data-action='trigger-warning-grade']").forEach((button) => {
             button.addEventListener("click", () => triggerManualWarningGrade(dashboard, button.dataset.warningGrade));
         });
@@ -1517,6 +1518,79 @@
                 Grid: fields.Grid ?? fields.grid ?? ""
             }
         });
+    }
+
+    function requestAstroNavTierAuthorization(dashboard, target) {
+        const restriction = getNavigationRestriction(target);
+        if (!restriction || hasRestrictionTierAccess(restriction.tier, getDashboardRestrictionTierAccess(dashboard))) {
+            return true;
+        }
+
+        showNavigationRestrictionPopup(dashboard, target, restriction);
+        return false;
+    }
+
+    function getNavigationRestrictionPublicNotice(target, restriction) {
+        const fields = target?.fields ?? target ?? {};
+        const system = String(fields.Planet ?? fields.planet ?? fields.name ?? fields.Grid ?? fields.grid ?? "Restricted destination").trim();
+        const tierId = Number(restriction?.tier?.id);
+
+        switch (tierId) {
+            case 5:
+                return {
+                    target: "NAVICOMPUTER RECORD EXPUNGED",
+                    tier: "Restriction Tier 5 // Classified Navigation Denial",
+                    notice: "The requested coordinates are absent from authorized public navigation records. Route plotting is unavailable without command authorization."
+                };
+            case 4:
+                return {
+                    target: system,
+                    tier: "Restriction Tier 4 // Quarantine Advisory",
+                    notice: "This destination is under Imperial quarantine. Civilian transit and unsanctioned approach are prohibited."
+                };
+            case 3:
+                return {
+                    target: system,
+                    tier: "Restriction Tier 3 // Martial Law Advisory",
+                    notice: "This destination is under active Imperial security control. Civilian traffic is suspended pending command authorization."
+                };
+            case 2:
+                return {
+                    target: system,
+                    tier: "Restriction Tier 2 // Naval Security Advisory",
+                    notice: "This destination contains protected Imperial naval assets. Approved traffic authorization is required before plotting a course."
+                };
+            case 1:
+                return {
+                    target: system,
+                    tier: "Restriction Tier 1 // Controlled Transit Advisory",
+                    notice: "This destination is a controlled labor or resource zone. Transit is limited to registered Imperial traffic."
+                };
+            default:
+                return {
+                    target: system,
+                    tier: "Restriction Tier 0 // Core Security Advisory",
+                    notice: "This destination is under Imperial Core security monitoring. Transit requires active command authorization."
+                };
+        }
+    }
+
+    function showNavigationRestrictionPopup(dashboard, target, restriction) {
+        const popup = dashboard.querySelector("#isl-navigation-restriction-popup");
+        if (!popup) return;
+
+        const notice = getNavigationRestrictionPublicNotice(target, restriction);
+        const targetReadout = dashboard.querySelector("#isl-navigation-restriction-target");
+        const tierReadout = dashboard.querySelector("#isl-navigation-restriction-tier");
+        const noticeReadout = dashboard.querySelector("#isl-navigation-restriction-notice");
+        if (targetReadout) targetReadout.textContent = notice.target;
+        if (tierReadout) tierReadout.textContent = notice.tier;
+        if (noticeReadout) noticeReadout.textContent = notice.notice;
+        popup.classList.remove("hidden");
+    }
+
+    function closeNavigationRestrictionPopup(dashboard) {
+        dashboard.querySelector("#isl-navigation-restriction-popup")?.classList.add("hidden");
     }
 
     function requiresNavigationClearance(target) {
@@ -2253,13 +2327,13 @@
             return;
         }
 
-        if (!hasAstroNavTargetData(destination, getDashboardNavData(dashboard))) {
-            renderAstroNavError(dashboard, "NavData package required for the selected objective coordinates.");
+        if (!requestAstroNavTierAuthorization(dashboard, destination)) {
+            setAstroNavStatus(dashboard, "Route plot blocked by destination navigation restrictions.", "error");
             return;
         }
 
-        if (!requestNavigationClearance(dashboard, destination, () => calculateAstroNavRoute(dashboard))) {
-            setAstroNavStatus(dashboard, "Imperial clearance code required for selected objective.", "error");
+        if (!hasAstroNavTargetData(destination, getDashboardNavData(dashboard))) {
+            renderAstroNavError(dashboard, "NavData package required for the selected objective coordinates.");
             return;
         }
 
