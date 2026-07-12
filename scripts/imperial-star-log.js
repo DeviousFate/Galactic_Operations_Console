@@ -3272,115 +3272,45 @@
 
     async function loadGridCoordinateRecords() {
         if (!gridCoordinateRecordsPromise) {
-            gridCoordinateRecordsPromise = fetchGridCoordinateRecords().catch((error) => {
-                gridCoordinateRecordsPromise = null;
-                throw error;
-            });
+            gridCoordinateRecordsPromise = fetchGridCoordinateRecords()
+                .catch((error) => {
+                    gridCoordinateRecordsPromise = null;
+                    throw error;
+                });
         }
 
         return gridCoordinateRecordsPromise;
     }
 
     async function fetchGridCoordinateRecords() {
-        let lastError;
+        gridCoordinateRecords = await getNavDataModule().loadCoordinateRecords(gridCoordinateCsvPaths);
+        gridCoordinateByName = gridCoordinateRecords.reduce((records, record) => {
+            records[normalizePlanetName(record.fields.Planet)] = record;
+            return records;
+        }, {});
+        gridCoordinateByGrid = gridCoordinateRecords.reduce((records, record) => {
+            const grid = normalizeGrid(record.fields.Grid);
+            if (grid && !records[grid]) records[grid] = record;
+            return records;
+        }, {});
+        gridRegionByGrid = buildGridRegionByGrid(gridCoordinateRecords);
 
-        for (const csvPath of gridCoordinateCsvPaths) {
-            try {
-                const response = await fetch(csvPath, { cache: "no-cache" });
-                if (!response.ok) {
-                    lastError = new Error(`${csvPath} returned ${response.status}`);
-                    continue;
-                }
+        Object.entries(GRID_COORDINATE_OVERRIDES).forEach(([name, fields]) => {
+            gridCoordinateByName[name] = { fields };
+            const grid = normalizeGrid(fields.Grid);
+            if (grid) gridCoordinateByGrid[grid] = { fields };
+            const region = normalizeHyperspaceRegion(fields.Region);
+            if (grid && region) gridRegionByGrid[grid] = region;
+        });
+        gridRegionCoordinates = buildGridRegionCoordinates(gridRegionByGrid);
 
-                const csvText = await response.text();
-                gridCoordinateRecords = parseGridCoordinateCsv(csvText);
-                gridCoordinateByName = gridCoordinateRecords.reduce((records, record) => {
-                    records[normalizePlanetName(record.fields.Planet)] = record;
-                    return records;
-                }, {});
-                gridCoordinateByGrid = gridCoordinateRecords.reduce((records, record) => {
-                    const grid = normalizeGrid(record.fields.Grid);
-                    if (grid && !records[grid]) records[grid] = record;
-                    return records;
-                }, {});
-                gridRegionByGrid = buildGridRegionByGrid(gridCoordinateRecords);
-
-                Object.entries(GRID_COORDINATE_OVERRIDES).forEach(([name, fields]) => {
-                    gridCoordinateByName[name] = { fields };
-                    const grid = normalizeGrid(fields.Grid);
-                    if (grid) gridCoordinateByGrid[grid] = { fields };
-                    const region = normalizeHyperspaceRegion(fields.Region);
-                    if (grid && region) gridRegionByGrid[grid] = region;
-                });
-                gridRegionCoordinates = buildGridRegionCoordinates(gridRegionByGrid);
-
-                return gridCoordinateRecords;
-            } catch (error) {
-                lastError = error;
-            }
-        }
-
-        throw lastError ?? new Error("No grid coordinate CSV path available.");
+        return gridCoordinateRecords;
     }
 
-    function parseGridCoordinateCsv(csvText) {
-        const rows = parseCsvRows(csvText);
-        const headers = rows.shift()?.map((header) => header.trim().replace(/^\uFEFF/, "")) ?? [];
-
-        return rows
-            .map((row) => {
-                const fields = headers.reduce((record, header, index) => {
-                    record[header] = String(row[index] ?? "").trim();
-                    return record;
-                }, {});
-
-                return { fields };
-            })
-            .filter((record) => record.fields.Planet);
-    }
-
-    function parseCsvRows(csvText) {
-        const rows = [];
-        let row = [];
-        let cell = "";
-        let inQuotes = false;
-
-        for (let index = 0; index < csvText.length; index += 1) {
-            const char = csvText[index];
-            const nextChar = csvText[index + 1];
-
-            if (char === "\"") {
-                if (inQuotes && nextChar === "\"") {
-                    cell += "\"";
-                    index += 1;
-                } else {
-                    inQuotes = !inQuotes;
-                }
-                continue;
-            }
-
-            if (char === "," && !inQuotes) {
-                row.push(cell);
-                cell = "";
-                continue;
-            }
-
-            if ((char === "\n" || char === "\r") && !inQuotes) {
-                if (char === "\r" && nextChar === "\n") index += 1;
-                row.push(cell);
-                if (row.some((value) => value.trim())) rows.push(row);
-                row = [];
-                cell = "";
-                continue;
-            }
-
-            cell += char;
-        }
-
-        row.push(cell);
-        if (row.some((value) => value.trim())) rows.push(row);
-
-        return rows;
+    function getNavDataModule() {
+        const navDataModule = globalThis.GalacticOperationsConsoleModules?.navData;
+        if (!navDataModule) throw new Error(`${MODULE_ID} | NavData module was not loaded.`);
+        return navDataModule;
     }
 
     function escapeHtml(value) {

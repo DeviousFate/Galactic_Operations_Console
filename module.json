@@ -20,6 +20,7 @@
     "scripts/modules/nav-routing.js",
     "scripts/modules/map-ui.js",
     "scripts/modules/state-sync.js",
+    "scripts/modules/navdata.js",
     "scripts/imperial-star-log.js"
   ],
   "styles": [
