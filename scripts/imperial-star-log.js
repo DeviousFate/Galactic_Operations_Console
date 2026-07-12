@@ -327,6 +327,7 @@
     const WARNING_SYSTEM_VISITS_SETTING_KEY = "warningSystemVisits";
     const LIVE_HAIL_LOG_SETTING_KEY = "liveHailLog";
     const COMMLINK_ALERT_SETTING_KEY = "commlinkAlertActive";
+    const QUICK_ACCESS_HIDDEN_SETTING_KEY = "quickAccessHidden";
     const STATION_JOURNAL_FOLDER_NAME = "Galactic Operations Console - Station Briefings";
     const STATION_JOURNAL_FLAG = "stationBriefing";
     const STATION_JOURNAL_MANIFEST_SETTING_KEY = "stationJournalManifestVersion";
@@ -3715,6 +3716,14 @@
         }
     }
 
+    function getQuickAccessPanelHidden() {
+        try {
+            return Boolean(game.settings.get(MODULE_ID, QUICK_ACCESS_HIDDEN_SETTING_KEY));
+        } catch (error) {
+            return false;
+        }
+    }
+
     async function toggleCommlinkAlert() {
         if (!game.user?.isGM) return;
 
@@ -3730,6 +3739,10 @@
 
     function mountCommlinkControl() {
         const existing = document.getElementById("isl-commlink-control");
+        if (getQuickAccessPanelHidden()) {
+            existing?.remove();
+            return;
+        }
         if (existing) {
             applyCommlinkAlertToUi(getCommlinkAlertActive());
             return;
@@ -3974,6 +3987,19 @@
             default: false,
             onChange: (active) => {
                 applyCommlinkAlertToUi(Boolean(active));
+            }
+        });
+
+        game.settings.register(MODULE_ID, QUICK_ACCESS_HIDDEN_SETTING_KEY, {
+            name: "Hide Quick Access Panel",
+            hint: "Hide the persistent Galactic Operations quick-access toolbar for this client.",
+            scope: "client",
+            config: true,
+            type: Boolean,
+            default: false,
+            onChange: (hidden) => {
+                if (hidden) document.getElementById("isl-commlink-control")?.remove();
+                else mountCommlinkControl();
             }
         });
 
