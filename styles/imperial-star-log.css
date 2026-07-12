@@ -44,15 +44,6 @@
     pointer-events: none;
 }
 
-#isl-commlink-control .isl-commlink-alert-trigger {
-    display: grid;
-    place-items: center;
-    border-color: #bc1e22;
-    color: #ffb3b3;
-    font-size: 1.15rem;
-    box-shadow: 0 0 8px rgba(188, 30, 34, 0.42), inset 0 0 9px rgba(188, 30, 34, 0.14);
-}
-
 #isl-commlink-control .isl-isb-conf-trigger {
     display: grid;
     place-items: center;
@@ -60,13 +51,6 @@
     color: #ffd24a;
     font-size: 1.1rem;
     box-shadow: 0 0 8px rgba(255, 210, 74, 0.34), inset 0 0 9px rgba(255, 210, 74, 0.13);
-}
-
-#isl-commlink-control.is-alerting .isl-commlink-alert-trigger {
-    border-color: #7cff9d;
-    color: #d9ffe3;
-    background: #164b26;
-    box-shadow: 0 0 10px #20b851, inset 0 0 12px rgba(175, 255, 199, 0.5);
 }
 
 #isl-commlink-control .isl-quick-access-button:hover,

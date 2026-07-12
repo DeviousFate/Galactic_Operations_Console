@@ -3767,19 +3767,6 @@
             isbButton.addEventListener("click", () => focusDashboardView("isl-confidential-tab"));
             control.append(isbButton);
 
-            const alertButton = document.createElement("button");
-            alertButton.type = "button";
-            alertButton.className = "isl-quick-access-button isl-commlink-alert-trigger";
-            alertButton.dataset.quickAction = "gm-commlink-alert";
-            alertButton.title = "Toggle player commlink alert";
-            alertButton.setAttribute("aria-label", "Toggle player commlink alert");
-            alertButton.innerHTML = '<i class="fas fa-broadcast-tower" aria-hidden="true"></i>';
-            alertButton.addEventListener("click", () => {
-                toggleCommlinkAlert().catch((error) => {
-                    console.error(`${MODULE_ID} | Failed to toggle commlink alert`, error);
-                });
-            });
-            control.append(alertButton);
         }
 
         QUICK_ACCESS_BUTTONS.forEach((definition) => {
@@ -3823,8 +3810,6 @@
             control.classList.toggle("is-alerting", isActive);
             const button = control.querySelector("[data-quick-action='commlink']");
             if (button && game.user?.isGM) button.setAttribute("aria-pressed", String(isActive));
-            const alertButton = control.querySelector("[data-quick-action='gm-commlink-alert']");
-            if (alertButton) alertButton.setAttribute("aria-pressed", String(isActive));
         });
     }
 
