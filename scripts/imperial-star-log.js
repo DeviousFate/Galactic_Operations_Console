@@ -1888,250 +1888,91 @@
         });
     }
 
+    function getMapUiModule() {
+        const mapUiModule = globalThis.GalacticOperationsConsoleModules?.mapUi;
+        if (!mapUiModule) throw new Error(`${MODULE_ID} | Map UI module was not loaded.`);
+        return mapUiModule;
+    }
+
+    function getMapUiModuleConfig() {
+        return {
+            gridColumns: MAP_GRID_COLUMNS,
+            restrictedGridEntries,
+            normalizeGrid,
+            normalizePlanetName,
+            getDashboardMapIndicatorsHidden,
+            getDashboardRestrictionTierAccess,
+            hasRestrictionTierAccess
+        };
+    }
+
     function renderGridOverlay(dashboard, calibration = getGridCalibration()) {
-        const svg = dashboard.querySelector("#isl-grid-overlay");
-        if (!svg) return;
-
-        svg.setAttribute("viewBox", "0 0 100 100");
-        svg.setAttribute("preserveAspectRatio", "none");
-
-        const fragment = document.createDocumentFragment();
-
-        if (!getDashboardMapIndicatorsHidden(dashboard)) {
-            const access = getDashboardRestrictionTierAccess(dashboard);
-            restrictedGridEntries.forEach((entry) => {
-                const authorizedEntry = getAuthorizedRestrictedGridEntry(entry, access);
-                const cell = gridToMapCell(entry.grid, calibration);
-                if (!authorizedEntry || !cell) return;
-                renderRestrictedSectorMarker(fragment, authorizedEntry, cell, calibration);
-            });
-        }
-
-        for (let col = 0; col <= MAP_GRID_COLUMNS.length; col += 1) {
-            const line = createSvgElement("line", {
-                class: col % 5 === 0 ? "isl-grid-line isl-grid-major-line" : "isl-grid-line",
-                x1: mapGridX(col, calibration),
-                y1: mapGridY(0, calibration),
-                x2: mapGridX(col, calibration),
-                y2: mapGridY(calibration.rows, calibration)
-            });
-            fragment.appendChild(line);
-        }
-
-        for (let row = 0; row <= calibration.rows; row += 1) {
-            const line = createSvgElement("line", {
-                class: row % 5 === 0 ? "isl-grid-line isl-grid-major-line" : "isl-grid-line",
-                x1: mapGridX(0, calibration),
-                y1: mapGridY(row, calibration),
-                x2: mapGridX(MAP_GRID_COLUMNS.length, calibration),
-                y2: mapGridY(row, calibration)
-            });
-            fragment.appendChild(line);
-        }
-
-        svg.replaceChildren(fragment);
-    }
-
-    function getAuthorizedRestrictedGridEntry(entry, access) {
-        const restrictions = entry.restrictions?.length
-            ? entry.restrictions
-            : [{ tier: entry.tier, stronghold: entry.stronghold }];
-        const authorizedRestrictions = restrictions
-            .filter((restriction) => hasRestrictionTierAccess(restriction.tier, access))
-            .sort((left, right) => right.tier.id - left.tier.id);
-        if (!authorizedRestrictions.length) return null;
-
-        return {
-            ...entry,
-            tier: authorizedRestrictions[0].tier,
-            stronghold: authorizedRestrictions.some((restriction) => restriction.stronghold)
-        };
-    }
-
-    function renderRestrictedSectorMarker(fragment, entry, cell, calibration) {
-        const width = mapGridCellWidth(calibration);
-        const height = mapGridCellHeight(calibration);
-        const markerPoint = getRestrictedSectorMarkerPoint(entry, cell, calibration);
-        const centerX = markerPoint.x;
-        const centerY = markerPoint.y;
-        const iconRadius = Math.min(width, height) * 0.28;
-        const tierClass = `isl-restricted-tier-${entry.tier.id}`;
-
-        if (!entry.stronghold) {
-            fragment.appendChild(createSvgElement("circle", {
-                class: `isl-restricted-dot ${tierClass}`,
-                cx: centerX,
-                cy: centerY,
-                r: iconRadius * 0.44
-            }));
-            return;
-        }
-
-        fragment.appendChild(createSvgElement("circle", {
-            class: "isl-stronghold-pulse isl-stronghold-pulse-primary",
-            cx: centerX,
-            cy: centerY,
-            r: iconRadius * 0.92
-        }));
-        fragment.appendChild(createSvgElement("circle", {
-            class: "isl-stronghold-pulse isl-stronghold-pulse-secondary",
-            cx: centerX,
-            cy: centerY,
-            r: iconRadius * 0.92
-        }));
-        fragment.appendChild(createSvgElement("polygon", {
-            class: "isl-stronghold-diamond isl-stronghold-diamond-outer",
-            points: createDiamondPoints(centerX, centerY, iconRadius)
-        }));
-        fragment.appendChild(createSvgElement("polygon", {
-            class: "isl-stronghold-diamond isl-stronghold-diamond-inner",
-            points: createDiamondPoints(centerX, centerY, iconRadius * 0.57)
-        }));
-        fragment.appendChild(createSvgElement("polygon", {
-            class: "isl-stronghold-star",
-            points: createStarPoints(centerX, centerY, iconRadius * 0.52, iconRadius * 0.24, 8)
-        }));
-    }
-
-    function getRestrictedSectorMarkerPoint(entry, cell, calibration) {
-        const isCoruscant = entry.planets?.some((planet) => normalizePlanetName(planet) === "CORUSCANT");
-        if (isCoruscant) {
-            return getMapPointForSpecialPosition("K9/K10/L9/L10 intersection", calibration);
-        }
-
-        return {
-            x: mapGridX(cell.col, calibration) + (mapGridCellWidth(calibration) / 2),
-            y: mapGridY(cell.row, calibration) + (mapGridCellHeight(calibration) / 2)
-        };
+        return getMapUiModule().renderGridOverlay(dashboard, calibration, getMapUiModuleConfig());
     }
 
     function getMapPointForSpecialPosition(mapPosition, calibration = getGridCalibration()) {
-        const normalizedPosition = String(mapPosition ?? "").trim().toUpperCase();
-        if (normalizedPosition !== "K9/K10/L9/L10 INTERSECTION") return null;
-
-        return {
-            x: mapGridX(MAP_GRID_COLUMNS.indexOf("L"), calibration),
-            y: mapGridY(9, calibration)
-        };
-    }
-
-    function createDiamondPoints(centerX, centerY, radius) {
-        return [
-            `${centerX},${centerY - radius}`,
-            `${centerX + radius},${centerY}`,
-            `${centerX},${centerY + radius}`,
-            `${centerX - radius},${centerY}`
-        ].join(" ");
-    }
-
-    function createStarPoints(centerX, centerY, outerRadius, innerRadius, points) {
-        const coordinates = [];
-        const totalPoints = points * 2;
-        for (let index = 0; index < totalPoints; index += 1) {
-            const radius = index % 2 === 0 ? outerRadius : innerRadius;
-            const angle = (-Math.PI / 2) + ((Math.PI * index) / points);
-            coordinates.push(`${centerX + (Math.cos(angle) * radius)},${centerY + (Math.sin(angle) * radius)}`);
-        }
-        return coordinates.join(" ");
-    }
-
-    function createSvgElement(tagName, attributes) {
-        const element = document.createElementNS("http://www.w3.org/2000/svg", tagName);
-
-        Object.entries(attributes).forEach(([key, value]) => {
-            element.setAttribute(key, String(value));
-        });
-
-        return element;
+        return getMapUiModule().getSpecialPositionPoint(mapPosition, calibration, getMapUiModuleConfig());
     }
 
     function gridToMapCell(grid, calibration = getGridCalibration()) {
-        const match = normalizeGrid(grid).match(/^([A-Z])(\d+)$/);
-        if (!match) return null;
-
-        const col = MAP_GRID_COLUMNS.indexOf(match[1]);
-        const row = Number(match[2]) - 1;
-        if (col < 0 || row < 0 || row >= calibration.rows) return null;
-
-        return { col, row };
+        return getMapUiModule().gridToCell(grid, calibration, getMapUiModuleConfig());
     }
 
     function mapGridCellWidth(calibration = getGridCalibration()) {
-        return (calibration.width / MAP_GRID_COLUMNS.length) * 100;
+        return getMapUiModule().cellWidth(calibration, getMapUiModuleConfig());
     }
 
     function mapGridCellHeight(calibration = getGridCalibration()) {
-        return (calibration.height / calibration.rows) * 100;
+        return getMapUiModule().cellHeight(calibration);
     }
 
     function mapGridX(col, calibration = getGridCalibration()) {
-        return (calibration.left + ((col / MAP_GRID_COLUMNS.length) * calibration.width)) * 100;
+        return getMapUiModule().gridX(col, calibration, getMapUiModuleConfig());
     }
 
     function mapGridY(row, calibration = getGridCalibration()) {
-        return (calibration.top + ((row / calibration.rows) * calibration.height)) * 100;
+        return getMapUiModule().gridY(row, calibration);
     }
 
     function gridToMapPoint(grid, calibration = getGridCalibration()) {
-        const cell = gridToMapCell(grid, calibration);
-        if (!cell) return null;
-
-        return {
-            x: mapGridX(cell.col + 0.5, calibration),
-            y: mapGridY(cell.row + 0.5, calibration)
-        };
+        return getMapUiModule().gridToPoint(grid, calibration, getMapUiModuleConfig());
     }
 
     function gridFromMapPointer(event, calibration = getGridCalibration(), stage = event.currentTarget) {
-        const rect = stage.getBoundingClientRect();
-        if (!rect.width || !rect.height) return "";
+        return getMapUiModule().gridFromPointer(event, calibration, stage, getMapUiModuleConfig());
+    }
 
-        const rawX = Math.min(rect.width - 1, Math.max(0, event.clientX - rect.left)) / rect.width;
-        const rawY = Math.min(rect.height - 1, Math.max(0, event.clientY - rect.top)) / rect.height;
-        const relativeX = (rawX - calibration.left) / calibration.width;
-        const relativeY = (rawY - calibration.top) / calibration.height;
-        if (relativeX < 0 || relativeX >= 1 || relativeY < 0 || relativeY >= 1) return "";
+    function getStateSyncModule() {
+        const stateSyncModule = globalThis.GalacticOperationsConsoleModules?.stateSync;
+        if (!stateSyncModule) throw new Error(`${MODULE_ID} | State-sync module was not loaded.`);
+        return stateSyncModule;
+    }
 
-        const col = Math.floor(relativeX * MAP_GRID_COLUMNS.length);
-        const row = Math.floor(relativeY * calibration.rows) + 1;
-        const column = MAP_GRID_COLUMNS[col];
-
-        return column ? `${column}${row}` : "";
+    function getStateSyncConfig() {
+        return {
+            moduleId: MODULE_ID,
+            liveStateSettingKey: LIVE_STATE_SETTING_KEY,
+            socketName: SOCKET_NAME,
+            defaultLiveState: DEFAULT_LIVE_STATE,
+            normalizeGrid,
+            isPrimaryActiveGM,
+            hasActiveGM,
+            applyLiveStateToOpenDashboards,
+            triggerFirstTimeSystemWarning,
+            setLiveUpdateStatus
+        };
     }
 
     function getLiveState() {
-        let savedState = DEFAULT_LIVE_STATE;
-
-        try {
-            savedState = game.settings.get(MODULE_ID, LIVE_STATE_SETTING_KEY);
-        } catch (error) {
-            savedState = DEFAULT_LIVE_STATE;
-        }
-
-        return normalizeLiveState(savedState);
+        return getStateSyncModule().getLiveState(getStateSyncConfig());
     }
 
     function normalizeLiveState(state = {}) {
-        const location = String(state?.location ?? DEFAULT_LIVE_STATE.location).trim() || DEFAULT_LIVE_STATE.location;
-        const shipGrid = normalizeGrid(state?.shipGrid ?? DEFAULT_LIVE_STATE.shipGrid) || DEFAULT_LIVE_STATE.shipGrid;
-
-        return { location, shipGrid };
+        return getStateSyncModule().normalizeLiveState(state, getStateSyncConfig());
     }
 
     function normalizeLiveStatePartial(partial = {}) {
-        const normalized = {};
-
-        if (Object.prototype.hasOwnProperty.call(partial, "location")) {
-            const location = String(partial.location ?? "").trim();
-            if (location) normalized.location = location;
-        }
-
-        if (Object.prototype.hasOwnProperty.call(partial, "shipGrid")) {
-            const shipGrid = normalizeGrid(partial.shipGrid);
-            if (shipGrid) normalized.shipGrid = shipGrid;
-        }
-
-        return normalized;
+        return getStateSyncModule().normalizeLiveStatePartial(partial, getStateSyncConfig());
     }
 
     async function setCurrentLocationFromDashboard(dashboard, rawName) {
@@ -2186,70 +2027,12 @@
         return gridCoordinateByName[lookupName] || null;
     }
 
-    async function requestLiveStateUpdate(dashboard, partial, {
-        successStatus = "",
-        requestedStatus = "",
-        errorStatus = "Active GM required to update operational telemetry.",
-        statusTarget = "live"
-    } = {}) {
-        const normalizedPartial = normalizeLiveStatePartial(partial);
-        if (!Object.keys(normalizedPartial).length) return null;
-
-        if (game.user?.isGM && isPrimaryActiveGM()) {
-            try {
-                const state = await persistLiveState(normalizedPartial, game.user.id);
-                if (successStatus) setLiveUpdateStatus(dashboard, successStatus, "", statusTarget);
-                return state;
-            } catch (error) {
-                console.error(`${MODULE_ID} | Failed to update operational telemetry`, error);
-                setLiveUpdateStatus(dashboard, "Operational telemetry update failed.", "error", statusTarget);
-                return null;
-            }
-        }
-
-        if (!hasActiveGM()) {
-            setLiveUpdateStatus(dashboard, errorStatus, "error", statusTarget);
-            ui.notifications?.warn("Galactic Operations Console requires an active GM to update operational telemetry.");
-            return null;
-        }
-
-        game.socket?.emit(SOCKET_NAME, {
-            type: "requestLiveStateUpdate",
-            requesterId: game.user?.id,
-            partial: normalizedPartial
-        });
-
-        if (requestedStatus) setLiveUpdateStatus(dashboard, requestedStatus, "dirty", statusTarget);
-        return null;
+    async function requestLiveStateUpdate(dashboard, partial, options = {}) {
+        return getStateSyncModule().requestLiveStateUpdate(dashboard, partial, options, getStateSyncConfig());
     }
 
     async function persistLiveState(partial, requesterId = null) {
-        if (!game.user?.isGM) return getLiveState();
-
-        const normalizedPartial = normalizeLiveStatePartial(partial);
-        const changedKeys = Object.keys(normalizedPartial);
-        if (!changedKeys.length) return getLiveState();
-
-        const state = normalizeLiveState({
-            ...getLiveState(),
-            ...normalizedPartial
-        });
-
-        await game.settings.set(MODULE_ID, LIVE_STATE_SETTING_KEY, state);
-        await applyLiveStateToOpenDashboards(state, { changedKeys });
-
-        game.socket?.emit(SOCKET_NAME, {
-            type: "liveStateUpdated",
-            requesterId,
-            state,
-            changedKeys
-        });
-
-        if (changedKeys.includes("location")) {
-            await triggerFirstTimeSystemWarning(state);
-        }
-
-        return state;
+        return getStateSyncModule().persistLiveState(partial, requesterId, getStateSyncConfig());
     }
 
     function applyLiveStateToOpenDashboards(state, options = {}) {

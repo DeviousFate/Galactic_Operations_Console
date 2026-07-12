@@ -18,6 +18,8 @@
     "scripts/modules/journals.js",
     "scripts/modules/warnings.js",
     "scripts/modules/nav-routing.js",
+    "scripts/modules/map-ui.js",
+    "scripts/modules/state-sync.js",
     "scripts/imperial-star-log.js"
   ],
   "styles": [

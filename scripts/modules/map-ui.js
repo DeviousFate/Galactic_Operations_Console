@@ -1,0 +1,193 @@
+(() => {
+    "use strict";
+
+    const modules = globalThis.GalacticOperationsConsoleModules ??= {};
+
+    modules.mapUi = {
+        renderGridOverlay(dashboard, calibration, config) {
+            const svg = dashboard.querySelector("#isl-grid-overlay");
+            if (!svg) return;
+
+            svg.setAttribute("viewBox", "0 0 100 100");
+            svg.setAttribute("preserveAspectRatio", "none");
+            const fragment = document.createDocumentFragment();
+
+            if (!config.getDashboardMapIndicatorsHidden(dashboard)) {
+                const access = config.getDashboardRestrictionTierAccess(dashboard);
+                config.restrictedGridEntries.forEach((entry) => {
+                    const authorizedEntry = getAuthorizedEntry(entry, access, config);
+                    const cell = gridToCell(entry.grid, calibration, config);
+                    if (authorizedEntry && cell) renderRestrictedMarker(fragment, authorizedEntry, cell, calibration, config);
+                });
+            }
+
+            for (let col = 0; col <= config.gridColumns.length; col += 1) {
+                fragment.appendChild(createSvgElement("line", {
+                    class: col % 5 === 0 ? "isl-grid-line isl-grid-major-line" : "isl-grid-line",
+                    x1: gridX(col, calibration, config), y1: gridY(0, calibration),
+                    x2: gridX(col, calibration, config), y2: gridY(calibration.rows, calibration)
+                }));
+            }
+            for (let row = 0; row <= calibration.rows; row += 1) {
+                fragment.appendChild(createSvgElement("line", {
+                    class: row % 5 === 0 ? "isl-grid-line isl-grid-major-line" : "isl-grid-line",
+                    x1: gridX(0, calibration, config), y1: gridY(row, calibration),
+                    x2: gridX(config.gridColumns.length, calibration, config), y2: gridY(row, calibration)
+                }));
+            }
+            svg.replaceChildren(fragment);
+        },
+
+        getSpecialPositionPoint(mapPosition, calibration, config) {
+            return getSpecialPositionPoint(mapPosition, calibration, config);
+        },
+
+        gridToCell(grid, calibration, config) {
+            return gridToCell(grid, calibration, config);
+        },
+
+        cellWidth(calibration, config) {
+            return cellWidth(calibration, config);
+        },
+
+        cellHeight(calibration) {
+            return cellHeight(calibration);
+        },
+
+        gridX(col, calibration, config) {
+            return gridX(col, calibration, config);
+        },
+
+        gridY(row, calibration) {
+            return gridY(row, calibration);
+        },
+
+        gridToPoint(grid, calibration, config) {
+            return gridToPoint(grid, calibration, config);
+        },
+
+        gridFromPointer(event, calibration, stage, config) {
+            const rect = stage?.getBoundingClientRect?.();
+            if (!rect?.width || !rect.height) return "";
+            const rawX = Math.min(rect.width - 1, Math.max(0, event.clientX - rect.left)) / rect.width;
+            const rawY = Math.min(rect.height - 1, Math.max(0, event.clientY - rect.top)) / rect.height;
+            const relativeX = (rawX - calibration.left) / calibration.width;
+            const relativeY = (rawY - calibration.top) / calibration.height;
+            if (relativeX < 0 || relativeX >= 1 || relativeY < 0 || relativeY >= 1) return "";
+            const column = config.gridColumns[Math.floor(relativeX * config.gridColumns.length)];
+            const row = Math.floor(relativeY * calibration.rows) + 1;
+            return column ? `${column}${row}` : "";
+        }
+    };
+
+    function getAuthorizedEntry(entry, access, config) {
+        const restrictions = entry.restrictions?.length
+            ? entry.restrictions
+            : [{ tier: entry.tier, stronghold: entry.stronghold }];
+        const authorized = restrictions
+            .filter((restriction) => config.hasRestrictionTierAccess(restriction.tier, access))
+            .sort((left, right) => right.tier.id - left.tier.id);
+        if (!authorized.length) return null;
+        return {
+            ...entry,
+            tier: authorized[0].tier,
+            stronghold: authorized.some((restriction) => restriction.stronghold)
+        };
+    }
+
+    function renderRestrictedMarker(fragment, entry, cell, calibration, config) {
+        const width = cellWidth(calibration, config);
+        const height = cellHeight(calibration);
+        const point = getMarkerPoint(entry, cell, calibration, config);
+        const radius = Math.min(width, height) * 0.28;
+        const tierClass = `isl-restricted-tier-${entry.tier.id}`;
+
+        if (!entry.stronghold) {
+            fragment.appendChild(createSvgElement("circle", {
+                class: `isl-restricted-dot ${tierClass}`, cx: point.x, cy: point.y, r: radius * 0.44
+            }));
+            return;
+        }
+
+        ["isl-stronghold-pulse isl-stronghold-pulse-primary", "isl-stronghold-pulse isl-stronghold-pulse-secondary"]
+            .forEach((className) => fragment.appendChild(createSvgElement("circle", {
+                class: className, cx: point.x, cy: point.y, r: radius * 0.92
+            })));
+        fragment.appendChild(createSvgElement("polygon", {
+            class: "isl-stronghold-diamond isl-stronghold-diamond-outer", points: diamondPoints(point.x, point.y, radius)
+        }));
+        fragment.appendChild(createSvgElement("polygon", {
+            class: "isl-stronghold-diamond isl-stronghold-diamond-inner", points: diamondPoints(point.x, point.y, radius * 0.57)
+        }));
+        fragment.appendChild(createSvgElement("polygon", {
+            class: "isl-stronghold-star", points: starPoints(point.x, point.y, radius * 0.52, radius * 0.24, 8)
+        }));
+    }
+
+    function getMarkerPoint(entry, cell, calibration, config) {
+        if (entry.planets?.some((planet) => config.normalizePlanetName(planet) === "CORUSCANT")) {
+            return getSpecialPositionPoint("K9/K10/L9/L10 intersection", calibration, config);
+        }
+        return {
+            x: gridX(cell.col, calibration, config) + (cellWidth(calibration, config) / 2),
+            y: gridY(cell.row, calibration) + (cellHeight(calibration) / 2)
+        };
+    }
+
+    function getSpecialPositionPoint(mapPosition, calibration, config) {
+        if (String(mapPosition ?? "").trim().toUpperCase() !== "K9/K10/L9/L10 INTERSECTION") return null;
+        return { x: gridX(config.gridColumns.indexOf("L"), calibration, config), y: gridY(9, calibration) };
+    }
+
+    function gridToCell(grid, calibration, config) {
+        const match = config.normalizeGrid(grid).match(/^([A-Z])(\d+)$/);
+        if (!match) return null;
+        const col = config.gridColumns.indexOf(match[1]);
+        const row = Number(match[2]) - 1;
+        return col < 0 || row < 0 || row >= calibration.rows ? null : { col, row };
+    }
+
+    function cellWidth(calibration, config) {
+        return (calibration.width / config.gridColumns.length) * 100;
+    }
+
+    function cellHeight(calibration) {
+        return (calibration.height / calibration.rows) * 100;
+    }
+
+    function gridX(col, calibration, config) {
+        return (calibration.left + ((col / config.gridColumns.length) * calibration.width)) * 100;
+    }
+
+    function gridY(row, calibration) {
+        return (calibration.top + ((row / calibration.rows) * calibration.height)) * 100;
+    }
+
+    function gridToPoint(grid, calibration, config) {
+        const cell = gridToCell(grid, calibration, config);
+        return cell ? {
+            x: gridX(cell.col + 0.5, calibration, config),
+            y: gridY(cell.row + 0.5, calibration)
+        } : null;
+    }
+
+    function diamondPoints(centerX, centerY, radius) {
+        return [`${centerX},${centerY - radius}`, `${centerX + radius},${centerY}`, `${centerX},${centerY + radius}`, `${centerX - radius},${centerY}`].join(" ");
+    }
+
+    function starPoints(centerX, centerY, outerRadius, innerRadius, points) {
+        const coordinates = [];
+        for (let index = 0; index < points * 2; index += 1) {
+            const radius = index % 2 === 0 ? outerRadius : innerRadius;
+            const angle = (-Math.PI / 2) + ((Math.PI * index) / points);
+            coordinates.push(`${centerX + (Math.cos(angle) * radius)},${centerY + (Math.sin(angle) * radius)}`);
+        }
+        return coordinates.join(" ");
+    }
+
+    function createSvgElement(tagName, attributes) {
+        const element = document.createElementNS("http://www.w3.org/2000/svg", tagName);
+        Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, String(value)));
+        return element;
+    }
+})();
