@@ -2,7 +2,7 @@
   "id": "star-log-imperial",
   "title": "Galactic Operations Console",
   "description": "A Star Wars 5e operations dashboard for mission control, intelligence, vessel systems, and hyperspace navigation.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "authors": [
     {
       "name": "StarLogImperial"
