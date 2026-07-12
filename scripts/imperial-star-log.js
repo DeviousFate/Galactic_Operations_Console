@@ -329,6 +329,7 @@
     const LIVE_HAIL_LOG_SETTING_KEY = "liveHailLog";
     const COMMLINK_ALERT_SETTING_KEY = "commlinkAlertActive";
     const QUICK_ACCESS_HIDDEN_SETTING_KEY = "quickAccessHidden";
+    const STARTUP_SEQUENCE_DISABLED_SETTING_KEY = "startupSequenceDisabled";
     const STATION_JOURNAL_FOLDER_NAME = "Galactic Operations Console - Station Briefings";
     const STATION_JOURNAL_FLAG = "stationBriefing";
     const STATION_JOURNAL_MANIFEST_SETTING_KEY = "stationJournalManifestVersion";
@@ -3748,6 +3749,11 @@
     }
 
     async function playCodexStartup(dashboard) {
+        if (getStartupSequenceDisabled()) {
+            dashboard.querySelector("#isl-codex-startup")?.classList.add("hidden");
+            return;
+        }
+
         const startupSequence = globalThis.GalacticOperationsConsoleModules?.startupSequence;
         if (!startupSequence) {
             console.error(`${MODULE_ID} | Startup sequence module was not loaded.`);
@@ -4018,6 +4024,14 @@
     function getQuickAccessPanelHidden() {
         try {
             return Boolean(game.settings.get(MODULE_ID, QUICK_ACCESS_HIDDEN_SETTING_KEY));
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function getStartupSequenceDisabled() {
+        try {
+            return Boolean(game.settings.get(MODULE_ID, STARTUP_SEQUENCE_DISABLED_SETTING_KEY));
         } catch (error) {
             return false;
         }
@@ -4295,6 +4309,21 @@
             onChange: (hidden) => {
                 if (hidden) document.getElementById("isl-commlink-control")?.remove();
                 else mountCommlinkControl();
+            }
+        });
+
+        game.settings.register(MODULE_ID, STARTUP_SEQUENCE_DISABLED_SETTING_KEY, {
+            name: "Disable Initial Terminal Sequence",
+            hint: "Skip the initial terminal pop-up sequence for this client.",
+            scope: "client",
+            config: true,
+            type: Boolean,
+            default: false,
+            onChange: (disabled) => {
+                if (!disabled) return;
+                document.querySelectorAll(".imperial-star-log-app #isl-codex-startup").forEach((startup) => {
+                    startup.classList.add("hidden");
+                });
             }
         });
 
