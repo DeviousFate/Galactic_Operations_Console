@@ -1,0 +1,8 @@
+{
+  "name": "galactic-operations-console",
+  "private": true,
+  "scripts": {
+    "check": "node --check scripts/imperial-star-log.js",
+    "test": "node --test tests/*.test.js"
+  }
+}

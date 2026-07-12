@@ -723,6 +723,34 @@
     color: #ffffff;
 }
 
+.imperial-star-log-app .isl-diagnostics {
+    display: grid;
+    gap: 5px;
+    margin: 10px 0;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-diagnostics-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid rgba(188, 30, 34, 0.28);
+    padding-bottom: 4px;
+}
+
+.imperial-star-log-app .isl-diagnostics-row strong[data-state="ready"] {
+    color: #8ee6a1;
+}
+
+.imperial-star-log-app .isl-diagnostics-row strong[data-state="pending"] {
+    color: #ffd24a;
+}
+
+.imperial-star-log-app .isl-diagnostics-row strong[data-state="error"] {
+    color: #ff7777;
+}
+
 .imperial-star-log-app .isl-location-form,
 .imperial-star-log-app .isl-planet-form {
     display: grid;

@@ -4,6 +4,10 @@
     const modules = globalThis.GalacticOperationsConsoleModules ??= {};
 
     modules.startupSequence = {
+        getStageDurations(config) {
+            return buildStageDurations(config);
+        },
+
         async play(dashboard, config) {
             const popup = dashboard.querySelector("#isl-codex-startup");
             const output = dashboard.querySelector("#isl-codex-startup-lines");

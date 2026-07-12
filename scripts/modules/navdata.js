@@ -2,9 +2,11 @@
     "use strict";
 
     const modules = globalThis.GalacticOperationsConsoleModules ??= {};
+    let coordinateLoadStatus = "unloaded";
 
     modules.navData = {
         async loadCoordinateRecords(paths) {
+            coordinateLoadStatus = "loading";
             let lastError;
             for (const path of paths) {
                 try {
@@ -13,12 +15,19 @@
                         lastError = new Error(`${path} returned ${response.status}`);
                         continue;
                     }
-                    return parseCoordinateCsv(await response.text());
+                    const records = parseCoordinateCsv(await response.text());
+                    coordinateLoadStatus = "ready";
+                    return records;
                 } catch (error) {
                     lastError = error;
                 }
             }
+            coordinateLoadStatus = "failed";
             throw lastError ?? new Error("No grid coordinate CSV path available.");
+        },
+
+        getLoadStatus() {
+            return coordinateLoadStatus;
         }
     };
 

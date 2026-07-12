@@ -4,6 +4,8 @@
     const modules = globalThis.GalacticOperationsConsoleModules ??= {};
     let definitionsPromise;
     let isdNamesPromise;
+    let definitionsLoadStatus = "unloaded";
+    let isdNamesLoadStatus = "unloaded";
 
     modules.warnings = {
         async triggerFirstVisit(state, config) {
@@ -53,20 +55,33 @@
 
             await config.transmit(payload);
             config.setStatus(dashboard, `Grade ${grade} warning transmitted.`, "");
+        },
+
+        getLoadStatus() {
+            return { definitions: definitionsLoadStatus, isdNames: isdNamesLoadStatus };
+        },
+
+        async preload(config) {
+            await loadDefinitions(config);
         }
     };
 
     async function loadDefinitions(config) {
         if (!definitionsPromise) {
+            definitionsLoadStatus = "loading";
             definitionsPromise = fetch(config.warningDefinitionsPath)
                 .then((response) => {
                     if (!response.ok) throw new Error(`Unable to load warning protocols (${response.status}).`);
                     return response.text();
                 })
-                .then(parseDefinitions)
+                .then((text) => {
+                    definitionsLoadStatus = "ready";
+                    return parseDefinitions(text);
+                })
                 .catch((error) => {
                     console.error(`${config.moduleId} | Failed to load warning protocols`, error);
                     definitionsPromise = null;
+                    definitionsLoadStatus = "failed";
                     return [];
                 });
         }
@@ -76,15 +91,20 @@
 
     async function loadIsdNames(config) {
         if (!isdNamesPromise) {
+            isdNamesLoadStatus = "loading";
             isdNamesPromise = fetch(config.isdNamesPath)
                 .then((response) => {
                     if (!response.ok) throw new Error(`Unable to load ISD names (${response.status}).`);
                     return response.text();
                 })
-                .then((text) => text.split(/\r?\n/).map((name) => name.trim()).filter(Boolean))
+                .then((text) => {
+                    isdNamesLoadStatus = "ready";
+                    return text.split(/\r?\n/).map((name) => name.trim()).filter(Boolean);
+                })
                 .catch((error) => {
                     console.error(`${config.moduleId} | Failed to load ISD names`, error);
                     isdNamesPromise = null;
+                    isdNamesLoadStatus = "failed";
                     return [];
                 });
         }
