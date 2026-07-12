@@ -280,6 +280,89 @@
     color: #cccccc;
 }
 
+.imperial-star-log-app .isl-vessel-source {
+    margin: 0 0 12px;
+    padding: 10px;
+    border: 1px solid rgba(255, 51, 51, 0.42);
+    background: rgba(0, 0, 0, 0.36);
+}
+
+.imperial-star-log-app .isl-vessel-field {
+    display: grid;
+    gap: 5px;
+    margin-bottom: 10px;
+    color: #ffd24a;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-vessel-select {
+    width: 100%;
+    min-height: 32px;
+    border: 1px solid #ff3333;
+    background: #080808;
+    color: #ffffff;
+    padding: 4px 7px;
+}
+
+.imperial-star-log-app .isl-vessel-summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+}
+
+.imperial-star-log-app .isl-vessel-summary.empty,
+.imperial-star-log-app .isl-vessel-stat-empty {
+    color: #ffd24a;
+    font-size: 0.84rem;
+}
+
+.imperial-star-log-app .isl-vessel-portrait {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border: 1px solid #ff3333;
+    object-fit: cover;
+}
+
+.imperial-star-log-app .isl-vessel-identity {
+    display: grid;
+    min-width: 0;
+}
+
+.imperial-star-log-app .isl-vessel-identity strong {
+    color: #ffffff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.imperial-star-log-app .isl-vessel-identity span {
+    color: #ff9999;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-vessel-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3px 12px;
+    margin: 10px 0 0;
+}
+
+.imperial-star-log-app .isl-vessel-stats dt {
+    color: #ff9999;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-vessel-stats dd {
+    margin: 0;
+    color: #ffffff;
+    overflow-wrap: anywhere;
+}
+
 .imperial-star-log-app .isl-warning-text {
     color: #ffd24a;
 }

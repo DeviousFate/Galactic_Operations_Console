@@ -90,8 +90,26 @@
                 <div class="isl-widget">
                     <div class="isl-widget-title">Vessel &amp; Deception Control</div>
                     <div class="isl-data-text">
-                        Vessel Profile: Modified Deep-Space Courier<br>
-                        Cover Identity: <i>The Rust-Wake</i> (Forged)<br>
+                        <div class="isl-vessel-source">
+                            {{#if isGM}}
+                            <label class="isl-vessel-field">
+                                <span>Linked Vehicle Actor</span>
+                                <select class="isl-vessel-select" data-primary-vessel-select aria-label="Linked Vehicle Actor">
+                                    <option value="">No linked vessel</option>
+                                    {{#each vehicleActors}}
+                                    <option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}} ({{type}})</option>
+                                    {{/each}}
+                                </select>
+                            </label>
+                            {{/if}}
+                            <div class="isl-vessel-readout" data-primary-vessel-readout>
+                                {{#if primaryVessel.configured}}
+                                <strong>{{primaryVessel.name}}</strong>
+                                {{else}}
+                                Vessel telemetry link unavailable.
+                                {{/if}}
+                            </div>
+                        </div>
                         Mission Theater: <span data-ship-location-readout>{{liveState.location}}</span><br>
                         Current Grid: <span data-ship-grid-readout>{{liveState.shipGrid}}</span><br>
                         Vessel Readiness: Sub-light engines nominal.<br>

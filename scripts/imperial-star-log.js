@@ -319,6 +319,7 @@
     const LEGACY_OPS_SETTING_KEY = "opsData";
     const LIVE_STATE_SETTING_KEY = "liveState";
     const STEALTH_SYSTEMS_SETTING_KEY = "stealthSystemsEngaged";
+    const PRIMARY_VESSEL_UUID_SETTING_KEY = "primaryVesselUuid";
     const GRID_ALIGNMENT_SETTING_KEY = "gridAlignment";
     const GRID_ALIGNMENT_UNLOCKED_SETTING_KEY = "gridAlignmentUnlocked";
     const RESTRICTION_TIER_ACCESS_SETTING_KEY = "restrictionTierAccess";
@@ -572,6 +573,8 @@
             missionBrief: getMissionBrief(),
             liveState: getLiveState(),
             stealthSystemsEngaged: getStealthSystemsEngaged(),
+            primaryVessel: getPrimaryVesselTemplateData(),
+            vehicleActors: getVehicleActorOptions(),
             gridCalibration: getGridCalibrationTemplateData(),
             gridAlignmentUnlocked: getGridAlignmentUnlocked(),
             restrictionTierAccess: getRestrictionTierAccessTemplateData(),
@@ -696,6 +699,7 @@
         const astroNavForm = dashboard.querySelector("#isl-astronav-form");
         const clearanceForm = dashboard.querySelector("#isl-clearance-form");
         const stealthButton = dashboard.querySelector("[data-action='toggle-stealth']");
+        const primaryVesselSelect = dashboard.querySelector("[data-primary-vessel-select]");
         const mapStage = dashboard.querySelector("#isl-map-stage");
         const routeToken = dashboard.querySelector("#isl-route-token");
         const mapIndicatorsToggle = dashboard.querySelector("[data-map-indicators-hidden]");
@@ -793,6 +797,9 @@
             void renderDiagnostics(dashboard, { refreshAsset: true });
         });
         stealthButton?.addEventListener("click", () => toggleStealthSystems(dashboard));
+        primaryVesselSelect?.addEventListener("change", () => {
+            void setPrimaryVesselFromDashboard(dashboard, primaryVesselSelect.value);
+        });
         mapStage?.addEventListener("pointerdown", (event) => beginMapPan(dashboard, event));
         mapStage?.addEventListener("pointermove", updateMapPan);
         mapStage?.addEventListener("pointerup", endMapPan);
@@ -832,6 +839,7 @@
         applyGridCalibrationToDashboard(dashboard, getGridCalibration());
         initializeLocationPanel(dashboard);
         updateStealthControls(dashboard, getStealthSystemsEngaged());
+        renderPrimaryVesselControl(dashboard);
         applyRestrictionTierAccessToDashboard(dashboard, getRestrictionTierAccess());
         applyMapIndicatorsHiddenToDashboard(dashboard, getMapIndicatorsHidden());
         playCodexStartup(dashboard);
@@ -3163,6 +3171,209 @@
         });
     }
 
+    function getPrimaryVesselUuid() {
+        try {
+            return String(game.settings.get(MODULE_ID, PRIMARY_VESSEL_UUID_SETTING_KEY) ?? "").trim();
+        } catch (error) {
+            return "";
+        }
+    }
+
+    function getPrimaryVesselActor() {
+        const uuid = getPrimaryVesselUuid();
+        if (!uuid) return null;
+
+        const actorId = uuid.startsWith("Actor.") ? uuid.slice("Actor.".length).split(".")[0] : uuid;
+        return game.actors?.get?.(actorId) ?? null;
+    }
+
+    function isVehicleActor(actor) {
+        const type = String(actor?.type ?? "").trim().toLowerCase();
+        return ["vehicle", "starship", "ship"].includes(type);
+    }
+
+    function getVehicleActors() {
+        const actors = Array.from(game.actors?.contents ?? []);
+        return actors
+            .filter(isVehicleActor)
+            .sort((left, right) => String(left.name).localeCompare(String(right.name)));
+    }
+
+    function getVehicleActorOptions() {
+        const primaryVessel = getPrimaryVesselActor();
+        return getVehicleActors().map((actor) => ({
+            id: actor.id,
+            name: actor.name,
+            type: actor.type,
+            selected: actor.id === primaryVessel?.id
+        }));
+    }
+
+    function readActorPath(actor, path) {
+        return path.split(".").reduce((value, key) => value?.[key], actor);
+    }
+
+    function getFirstVesselValue(actor, paths) {
+        for (const path of paths) {
+            const value = readActorPath(actor, path);
+            if (value !== undefined && value !== null && value !== "") return value;
+        }
+        return null;
+    }
+
+    function formatVesselValue(value) {
+        if (value === undefined || value === null || value === "") return "";
+        if (Array.isArray(value)) return value.filter(Boolean).join(", ");
+        if (typeof value !== "object") return String(value);
+
+        const preferredValue = value.value ?? value.current ?? value.total ?? value.max ?? value.label ?? value.name;
+        return preferredValue === undefined || preferredValue === null ? "" : String(preferredValue);
+    }
+
+    function getVesselStatValue(actor, paths) {
+        return formatVesselValue(getFirstVesselValue(actor, paths));
+    }
+
+    function getPrimaryVesselTemplateData() {
+        const actor = getPrimaryVesselActor();
+        if (!actor) {
+            return {
+                configured: false,
+                name: "No Vehicle Actor linked",
+                image: "",
+                type: "",
+                stats: []
+            };
+        }
+
+        const hullCurrent = getVesselStatValue(actor, [
+            "system.attributes.hull.value",
+            "system.hull.value",
+            "system.attributes.hp.value",
+            "system.hp.value"
+        ]);
+        const hullMax = getVesselStatValue(actor, [
+            "system.attributes.hull.max",
+            "system.hull.max",
+            "system.attributes.hp.max",
+            "system.hp.max"
+        ]);
+        const shieldCurrent = getVesselStatValue(actor, [
+            "system.attributes.shields.value",
+            "system.shields.value",
+            "system.attributes.shield.value",
+            "system.shield.value"
+        ]);
+        const shieldMax = getVesselStatValue(actor, [
+            "system.attributes.shields.max",
+            "system.shields.max",
+            "system.attributes.shield.max",
+            "system.shield.max"
+        ]);
+        const hull = hullCurrent ? `${hullCurrent}${hullMax ? ` / ${hullMax}` : ""}` : "";
+        const shields = shieldCurrent ? `${shieldCurrent}${shieldMax ? ` / ${shieldMax}` : ""}` : "";
+        const stats = [
+            ["Hull Integrity", hull],
+            ["Shield Integrity", shields],
+            ["Armor Rating", getVesselStatValue(actor, ["system.attributes.ac.value", "system.attributes.ac", "system.ac.value", "system.ac"])],
+            ["Speed", getVesselStatValue(actor, ["system.attributes.speed.value", "system.speed.value", "system.attributes.speed", "system.speed"])],
+            ["Scale", getVesselStatValue(actor, ["system.details.size", "system.attributes.size", "system.size"])],
+            ["Crew", getVesselStatValue(actor, ["system.details.crew", "system.crew.capacity", "system.crew"])],
+            ["Cargo", getVesselStatValue(actor, ["system.details.cargo", "system.cargo.capacity", "system.cargo"])],
+            ["Hyperdrive", getVesselStatValue(actor, ["system.attributes.hyperdrive.value", "system.hyperdrive.class", "system.hyperdrive"])],
+            ["Sensors", getVesselStatValue(actor, ["system.attributes.sensors.value", "system.sensors.range", "system.sensors"])]
+        ].filter(([, value]) => value);
+
+        return {
+            configured: true,
+            name: actor.name,
+            image: actor.img ?? "",
+            type: String(actor.type ?? "Vehicle"),
+            stats
+        };
+    }
+
+    function renderPrimaryVesselControl(dashboard) {
+        const vessel = getPrimaryVesselTemplateData();
+        const readout = dashboard.querySelector("[data-primary-vessel-readout]");
+        if (!readout) return;
+
+        readout.replaceChildren();
+        const summary = document.createElement("div");
+        summary.className = "isl-vessel-summary";
+
+        if (!vessel.configured) {
+            summary.classList.add("empty");
+            summary.textContent = game.user?.isGM
+                ? "No Vehicle Actor linked. Select the party vessel above to synchronize its sheet data."
+                : "Vessel telemetry link unavailable. Awaiting GM vessel assignment.";
+            readout.append(summary);
+            return;
+        }
+
+        if (vessel.image) {
+            const image = document.createElement("img");
+            image.className = "isl-vessel-portrait";
+            image.src = vessel.image;
+            image.alt = "";
+            summary.append(image);
+        }
+
+        const identity = document.createElement("div");
+        identity.className = "isl-vessel-identity";
+        const name = document.createElement("strong");
+        name.textContent = vessel.name;
+        const type = document.createElement("span");
+        type.textContent = `${vessel.type} actor telemetry`;
+        identity.append(name, type);
+        summary.append(identity);
+        readout.append(summary);
+
+        if (!vessel.stats.length) {
+            const status = document.createElement("div");
+            status.className = "isl-vessel-stat-empty";
+            status.textContent = "No compatible vessel telemetry fields are populated on this actor sheet.";
+            readout.append(status);
+            return;
+        }
+
+        const stats = document.createElement("dl");
+        stats.className = "isl-vessel-stats";
+        vessel.stats.forEach(([label, value]) => {
+            const term = document.createElement("dt");
+            term.textContent = label;
+            const detail = document.createElement("dd");
+            detail.textContent = value;
+            stats.append(term, detail);
+        });
+        readout.append(stats);
+    }
+
+    async function setPrimaryVesselFromDashboard(dashboard, actorId) {
+        if (!game.user?.isGM) return;
+
+        const actor = getVehicleActors().find((candidate) => candidate.id === actorId);
+        const uuid = actor?.uuid ?? "";
+        await game.settings.set(MODULE_ID, PRIMARY_VESSEL_UUID_SETTING_KEY, uuid);
+        applyPrimaryVesselToOpenDashboards();
+
+        if (!actor) {
+            ui.notifications?.info("Vehicle Actor link cleared.");
+            return;
+        }
+
+        ui.notifications?.info(`${actor.name} linked to Vessel Control.`);
+        renderPrimaryVesselControl(dashboard);
+    }
+
+    function applyPrimaryVesselToOpenDashboards() {
+        document.querySelectorAll(".imperial-star-log-app .isl-dashboard").forEach((dashboard) => {
+            const select = dashboard.querySelector("[data-primary-vessel-select]");
+            if (select) select.value = getPrimaryVesselActor()?.id ?? "";
+            renderPrimaryVesselControl(dashboard);
+        });
+    }
+
     async function loadGridCoordinateRecords() {
         if (!gridCoordinateRecordsPromise) {
             gridCoordinateRecordsPromise = fetchGridCoordinateRecords()
@@ -3898,6 +4109,17 @@
             default: false
         });
 
+        game.settings.register(MODULE_ID, PRIMARY_VESSEL_UUID_SETTING_KEY, {
+            name: "Galactic Operations Console Primary Vessel",
+            scope: "world",
+            config: false,
+            type: String,
+            default: "",
+            onChange: () => {
+                applyPrimaryVesselToOpenDashboards();
+            }
+        });
+
         game.settings.register(MODULE_ID, GRID_ALIGNMENT_SETTING_KEY, {
             name: "Galactic Operations Console Grid Alignment",
             scope: "world",
@@ -4018,12 +4240,21 @@
         game.socket?.on(SOCKET_NAME, handleSocketMessage);
         mountCommlinkControl();
 
+        Hooks.on("updateActor", (actor) => {
+            if (actor.id === getPrimaryVesselActor()?.id) applyPrimaryVesselToOpenDashboards();
+        });
+
+        Hooks.on("deleteActor", (actor) => {
+            if (actor.id === getPrimaryVesselActor()?.id) applyPrimaryVesselToOpenDashboards();
+        });
+
         const api = {
             open: openStarLog,
             getMissionBrief,
             saveMissionBrief: persistMissionBrief,
             getStealthSystemsEngaged,
             setStealthSystemsEngaged: persistStealthSystemsEngaged,
+            getPrimaryVessel: getPrimaryVesselActor,
             getGridCalibration,
             saveGridAlignment: persistGridAlignment,
             getGridAlignmentUnlocked,
