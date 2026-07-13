@@ -1316,6 +1316,24 @@
     cursor: grabbing;
 }
 
+.imperial-star-log-app .isl-grid-hover-readout {
+    position: absolute;
+    z-index: 5;
+    max-width: min(180px, 36%);
+    border: 1px solid #15f2fd;
+    background: rgba(2, 16, 20, 0.94);
+    box-shadow: 0 0 12px rgba(21, 242, 253, 0.55);
+    color: #15f2fd;
+    padding: 4px 7px;
+    font-size: 0.72rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    pointer-events: none;
+    text-align: center;
+    text-transform: uppercase;
+    transform: translate(-50%, calc(-100% - 8px));
+}
+
 .imperial-star-log-app .isl-planet-focus-marker {
     position: absolute;
     z-index: 1;

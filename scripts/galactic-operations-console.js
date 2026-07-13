@@ -2604,6 +2604,11 @@
         const dashboard = root?.querySelector?.(".isl-dashboard") ?? root;
         dashboard?._islResizeObserver?.disconnect();
         if (dashboard) delete dashboard._islResizeObserver;
+        if (dashboard?._islGridHoverTimer) clearTimeout(dashboard._islGridHoverTimer);
+        if (dashboard) {
+            delete dashboard._islGridHoverTimer;
+            delete dashboard._islGridHoverCandidate;
+        }
     }
 
     function activateDashboardListeners(root) {
@@ -2736,9 +2741,13 @@
             void setPrimaryVesselFromDashboard(dashboard, primaryVesselSelect.value);
         });
         mapStage?.addEventListener("pointerdown", (event) => beginMapPan(dashboard, event));
-        mapStage?.addEventListener("pointermove", updateMapPan);
+        mapStage?.addEventListener("pointermove", (event) => {
+            updateMapPan(event);
+            queueMapGridIdentification(dashboard, event);
+        });
         mapStage?.addEventListener("pointerup", endMapPan);
         mapStage?.addEventListener("pointercancel", endMapPan);
+        mapStage?.addEventListener("pointerleave", () => clearMapGridIdentification(dashboard));
         mapStage?.addEventListener("contextmenu", (event) => event.preventDefault());
         mapStage?.addEventListener("click", (event) => queueMapStageClick(dashboard, event));
         mapStage?.addEventListener("dblclick", (event) => zoomMapAtCursorGrid(dashboard, event));
@@ -3865,6 +3874,43 @@
 
     function renderGridOverlay(dashboard, calibration = getGridCalibration()) {
         return getMapUiModule().renderGridOverlay(dashboard, calibration, getMapUiModuleConfig());
+    }
+
+    function queueMapGridIdentification(dashboard, event) {
+        if (activeGridAlignmentEdit || dashboard.dataset.routePlacement === "true") {
+            clearMapGridIdentification(dashboard);
+            return;
+        }
+
+        const stage = dashboard.querySelector("#isl-map-stage");
+        const grid = gridFromMapPointer(event, getGridCalibration(), stage);
+        if (!grid || grid === dashboard._islGridHoverCandidate) return;
+
+        clearMapGridIdentification(dashboard, { keepTooltip: false });
+        dashboard._islGridHoverCandidate = grid;
+        dashboard._islGridHoverTimer = setTimeout(() => {
+            if (dashboard._islGridHoverCandidate !== grid || !dashboard.isConnected) return;
+            showMapGridIdentification(dashboard, grid);
+        }, 2000);
+    }
+
+    function showMapGridIdentification(dashboard, grid) {
+        const tooltip = dashboard.querySelector("#isl-grid-hover-readout");
+        const point = gridToMapPoint(grid, getGridCalibration());
+        if (!tooltip || !point) return;
+
+        const known = hasGridNavData(grid, getDashboardNavData(dashboard));
+        tooltip.textContent = known ? `GRID ${grid}` : "NAVDATA ENCRYPTED";
+        tooltip.style.left = `${point.x}%`;
+        tooltip.style.top = `${point.y}%`;
+        tooltip.classList.remove("hidden");
+    }
+
+    function clearMapGridIdentification(dashboard, { keepTooltip = false } = {}) {
+        if (dashboard._islGridHoverTimer) clearTimeout(dashboard._islGridHoverTimer);
+        delete dashboard._islGridHoverTimer;
+        delete dashboard._islGridHoverCandidate;
+        if (!keepTooltip) dashboard.querySelector("#isl-grid-hover-readout")?.classList.add("hidden");
     }
 
     function getMapPointForSpecialPosition(mapPosition, calibration = getGridCalibration()) {
