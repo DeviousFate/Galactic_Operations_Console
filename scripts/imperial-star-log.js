@@ -762,6 +762,13 @@
             updateNavDataFromDashboard(dashboard);
         });
 
+        const navDataScope = navDataForm?.elements?.namedItem("navDataScope");
+        const navDataValue = navDataForm?.elements?.namedItem("navDataValue");
+        navDataScope?.addEventListener("change", () => {
+            if (navDataValue) navDataValue.value = "";
+            populateNavDataOptions(dashboard);
+        });
+
         mapIndicatorsToggle?.addEventListener("change", () => {
             setMapIndicatorsHiddenFromDashboard(dashboard, mapIndicatorsToggle.checked);
         });
@@ -3052,22 +3059,48 @@
         populateAstroNavOptions(dashboard, records);
     }
 
-    function populateNavDataOptions(dashboard, records) {
+    function populateNavDataOptions(dashboard, records = gridCoordinateRecords) {
         const options = dashboard.querySelector("#isl-navdata-options");
-        if (!options) return;
+        const form = dashboard.querySelector("#isl-navdata-form");
+        const scope = form?.elements?.namedItem("navDataScope")?.value;
+        const valueInput = form?.elements?.namedItem("navDataValue");
+        if (!options || !Object.prototype.hasOwnProperty.call(getDefaultNavData(), scope)) return;
 
-        const values = [
-            ...Object.keys(HYPERSPACE_REGION_TRAVEL_HOURS),
-            ...records.map((record) => record.fields.Sector),
-            ...records.map((record) => record.fields.Grid),
-            ...records.map((record) => record.fields.Planet)
-        ].map((value) => String(value ?? "").trim()).filter(Boolean);
+        const values = getNavDataDesignationOptions(scope, records);
 
         options.replaceChildren(...[...new Set(values)].sort((left, right) => left.localeCompare(right)).map((value) => {
             const option = document.createElement("option");
             option.value = value;
             return option;
         }));
+
+        if (valueInput) valueInput.placeholder = getNavDataDesignationPlaceholder(scope);
+    }
+
+    function getNavDataDesignationOptions(scope, records = gridCoordinateRecords) {
+        switch (scope) {
+            case "regions":
+                return Object.keys(HYPERSPACE_REGION_TRAVEL_HOURS);
+            case "sectors":
+                return records.map((record) => record.fields.Sector);
+            case "grids": {
+                const rows = getGridCalibration().rows || DEFAULT_MAP_GRID_CALIBRATION.rows;
+                return MAP_GRID_COLUMNS.flatMap((column) => Array.from({ length: rows }, (_, index) => `${column}${index + 1}`));
+            }
+            case "planets":
+                return records.map((record) => record.fields.Planet);
+            default:
+                return [];
+        }
+    }
+
+    function getNavDataDesignationPlaceholder(scope) {
+        return {
+            regions: "Select a region chart",
+            sectors: "Select a sector survey",
+            grids: "Select a tactical grid",
+            planets: "Select a planetary packet"
+        }[scope] || "Select a package level";
     }
 
     function populateAstroNavOptions(dashboard, records) {
