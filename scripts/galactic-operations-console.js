@@ -5950,8 +5950,8 @@
                         id: "imperial-star-log",
                         title: "Galactic Operations Console",
                         template: templatePath,
-                        width: 1400,
-                        height: 990,
+                        width: 1600,
+                        height: 1100,
                         resizable: true,
                         classes: ["imperial-star-log-app"]
                     };
@@ -5990,8 +5990,8 @@
                         resizable: true
                     },
                     position: {
-                        width: 1400,
-                        height: 990
+                        width: 1600,
+                        height: 1100
                     }
                 };
 
