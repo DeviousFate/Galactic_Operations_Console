@@ -1395,14 +1395,20 @@
             || normalizeGrid(fields.Grid) === normalizeGrid(liveState.shipGrid);
     }
 
+    function hasRestrictedNavDataClearance(target) {
+        return !requiresNavigationClearance(target) || hasNavigationClearance(target);
+    }
+
     function hasPlanetNavData(record, navData = getNavData()) {
         const fields = record?.fields ?? record ?? {};
+        if (!hasRestrictedNavDataClearance(record)) return false;
         return isCurrentNavDataTarget(record)
             || hasNavDataValue("planets", fields.Planet ?? fields.planet ?? fields.name, navData);
     }
 
     function hasSystemNavData(record, navData = getNavData()) {
         const fields = record?.fields ?? record ?? {};
+        if (!hasRestrictedNavDataClearance(record)) return false;
         return isCurrentNavDataTarget(record)
             || hasPlanetNavData(record, navData)
             || hasNavDataValue("grids", fields.Grid ?? fields.grid, navData)
@@ -1413,6 +1419,9 @@
         const normalizedGrid = normalizeGrid(grid);
         if (game.user?.isGM) return true;
         if (!normalizedGrid) return false;
+        if (!hasRestrictedNavDataClearance({ grid: normalizedGrid })) {
+            return false;
+        }
 
         const gridNavData = gridNavDataByGrid[normalizedGrid] || {};
         const gridRegion = navData.regions?.length ? getAstroNavGridRegion(normalizedGrid, "") : "";
@@ -1706,6 +1715,7 @@
 
         navigationClearanceKeys.add(key);
         closeNavigationClearancePopup(dashboard);
+        applyNavDataToDashboard(dashboard, getDashboardNavData(dashboard));
         setLocationStatus(dashboard, "Imperial clearance accepted. Navigation authorization granted.", "");
         await request.onAuthorized();
     }
