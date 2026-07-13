@@ -34,7 +34,7 @@
     function parseCoordinateCsv(csvText) {
         const rows = parseCsvRows(csvText);
         const headers = rows.shift()?.map((header) => header.trim().replace(/^\uFEFF/, "")) ?? [];
-        return rows
+        const records = rows
             .map((row) => ({
                 fields: headers.reduce((record, header, index) => {
                     record[header] = String(row[index] ?? "").trim();
@@ -42,6 +42,26 @@
                 }, {})
             }))
             .filter((record) => record.fields.Planet);
+        return applySectorFallback(records);
+    }
+
+    function applySectorFallback(records) {
+        const firstPlanetByGrid = new Map();
+        records.forEach((record) => {
+            const grid = String(record.fields.Grid ?? "").trim();
+            const planet = String(record.fields.Planet ?? "").trim();
+            if (grid && planet && !firstPlanetByGrid.has(grid)) firstPlanetByGrid.set(grid, planet);
+        });
+
+        records.forEach((record) => {
+            const grid = String(record.fields.Grid ?? "").trim();
+            const sector = String(record.fields.Sector ?? "").trim();
+            if (grid && (!sector || sector === "|") && firstPlanetByGrid.has(grid)) {
+                record.fields.Sector = `${firstPlanetByGrid.get(grid)} Sector`;
+            }
+        });
+
+        return records;
     }
 
     function parseCsvRows(csvText) {
