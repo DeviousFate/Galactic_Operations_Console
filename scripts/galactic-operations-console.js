@@ -3298,7 +3298,10 @@
             return GRID_COORDINATE_ALIASES[normalized] || planetAliases[normalized] || normalized;
         }
         if (scope === "regions") return normalizeHyperspaceRegion(value).toUpperCase();
-        return String(value ?? "").trim().replace(/\s+/g, " ").toUpperCase();
+        const normalized = String(value ?? "").trim().replace(/\s+/g, " ");
+        // NavData uses a pipe character when no sector has been identified.
+        if (scope === "sectors" && normalized === "|") return "";
+        return normalized.toUpperCase();
     }
 
     function sanitizeNavData(navData) {
@@ -5012,7 +5015,9 @@
             case "regions":
                 return Object.keys(HYPERSPACE_REGION_TRAVEL_HOURS);
             case "sectors":
-                return records.map((record) => record.fields.Sector);
+                return records
+                    .map((record) => String(record.fields.Sector ?? "").trim())
+                    .filter((sector) => normalizeNavDataValue("sectors", sector));
             case "grids": {
                 const rows = getGridCalibration().rows || DEFAULT_MAP_GRID_CALIBRATION.rows;
                 return MAP_GRID_COLUMNS.flatMap((column) => Array.from({ length: rows }, (_, index) => `${column}${index + 1}`));
