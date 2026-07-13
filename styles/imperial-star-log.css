@@ -1692,6 +1692,11 @@
     min-width: 0;
 }
 
+.imperial-star-log-app .isl-navdata-form input[name="navDataValue"] {
+    color: #ffd24a;
+    caret-color: #ffd24a;
+}
+
 .imperial-star-log-app .isl-navdata-form .isl-form-actions {
     grid-column: 1 / -1;
 }
