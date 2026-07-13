@@ -148,13 +148,16 @@
 
 .imperial-star-log-app .isl-crest {
     width: 100%;
-    min-height: clamp(78px, 16%, 120px);
+    min-height: clamp(132px, 18%, 164px);
+    flex: 0 0 auto;
     border: 2px solid #ff3333;
     margin-bottom: 16px;
+    padding: 12px 14px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    gap: 8px;
     text-transform: uppercase;
     background: radial-gradient(circle, #330000 0%, #000000 100%);
     text-align: center;
@@ -163,14 +166,15 @@
 .imperial-star-log-app .isl-crest-aurebesh {
     color: #ff4d4d;
     font-family: "Aurebesh AF Canon Tech", monospace;
-    font-size: clamp(1.35rem, 2.6vw, 2.15rem);
+    max-width: 100%;
+    font-size: clamp(1.1rem, 6cqw, 1.8rem);
     letter-spacing: 0.08em;
-    line-height: 1.05;
+    line-height: 1.12;
     text-shadow: 0 0 8px rgba(255, 51, 51, 0.65);
 }
 
 .imperial-star-log-app .isl-crest-basic {
-    margin-top: 8px;
+    margin-top: 0;
     color: #ffcccc;
     font-size: 0.7rem;
     font-weight: bold;
