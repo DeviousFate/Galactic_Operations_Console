@@ -972,16 +972,15 @@
 }
 
 .imperial-star-log-app .isl-navdata-fog {
-    opacity: 0.98;
-    animation: isl-navdata-fog-flicker 3.8s steps(2, end) infinite;
+    fill: #061216;
+    opacity: 0.94;
+    filter: blur(0.45px);
+    animation: isl-navdata-fog-breathe 12s ease-in-out infinite;
 }
 
-@keyframes isl-navdata-fog-flicker {
-    0%, 16%, 100% { opacity: 0.98; }
-    17% { opacity: 0.91; }
-    18% { opacity: 0.98; }
-    62% { opacity: 0.95; }
-    63% { opacity: 0.98; }
+@keyframes isl-navdata-fog-breathe {
+    0%, 100% { opacity: 0.94; }
+    50% { opacity: 0.9; }
 }
 
 .imperial-star-log-app .isl-route-overlay {

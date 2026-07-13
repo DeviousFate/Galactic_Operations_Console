@@ -1208,7 +1208,6 @@
     const modules = globalThis.GalacticOperationsConsoleModules ??= {};
     let activePan = null;
     let pendingMapClick = null;
-    let navDataFogPatternSerial = 0;
 
     modules.mapUi = {
         renderGridOverlay(dashboard, calibration, config) {
@@ -1400,46 +1399,17 @@
         }
         if (!unknownGrids.length) return;
 
-        const patternId = getNavDataFogPatternId(svg);
-        fragment.appendChild(createNavDataFogDefinitions(patternId));
         const width = cellWidth(calibration, config);
         const height = cellHeight(calibration);
-        unknownGrids.forEach(({ column, row }) => {
-            fragment.appendChild(createSvgElement("rect", {
-                class: "isl-navdata-fog",
-                x: gridX(column, calibration, config),
-                y: gridY(row, calibration),
-                width,
-                height,
-                fill: `url(#${patternId})`
-            }));
-        });
-    }
-
-    function getNavDataFogPatternId(svg) {
-        if (!svg.dataset.navDataFogPatternId) {
-            navDataFogPatternSerial += 1;
-            svg.dataset.navDataFogPatternId = `isl-navdata-fog-${navDataFogPatternSerial}`;
-        }
-        return svg.dataset.navDataFogPatternId;
-    }
-
-    function createNavDataFogDefinitions(patternId) {
-        const definitions = createSvgElement("defs", {});
-        const pattern = createSvgElement("pattern", {
-            id: patternId,
-            width: 2.4,
-            height: 2.4,
-            patternUnits: "userSpaceOnUse"
-        });
-        pattern.append(
-            createSvgElement("rect", { width: 2.4, height: 2.4, fill: "#04090c" }),
-            createSvgElement("path", { d: "M0 0H2.4M0 1.2H2.4M0.6 0V2.4", stroke: "#123b43", "stroke-width": 0.08, opacity: 0.88 }),
-            createSvgElement("rect", { x: 1.5, y: 0.42, width: 0.5, height: 0.24, fill: "#1d5962", opacity: 0.8 }),
-            createSvgElement("rect", { x: 0.25, y: 1.66, width: 0.72, height: 0.18, fill: "#102d34", opacity: 0.92 })
-        );
-        definitions.appendChild(pattern);
-        return definitions;
+        const path = unknownGrids.map(({ column, row }) => {
+            const x = gridX(column, calibration, config);
+            const y = gridY(row, calibration);
+            return `M${x} ${y}h${width}v${height}h-${width}Z`;
+        }).join("");
+        fragment.appendChild(createSvgElement("path", {
+            class: "isl-navdata-fog",
+            d: path
+        }));
     }
 
     function renderRestrictedMarker(fragment, entry, cell, calibration, config) {
