@@ -1541,6 +1541,16 @@
         return false;
     }
 
+    function requestTacticalScanTierAuthorization(dashboard, target) {
+        const restriction = getNavigationRestriction(target);
+        if (!restriction || hasRestrictionTierAccess(restriction.tier, getDashboardRestrictionTierAccess(dashboard))) {
+            return true;
+        }
+
+        showNavigationRestrictionPopup(dashboard, target, restriction);
+        return false;
+    }
+
     function getNavigationRestrictionPublicNotice(target, restriction) {
         const fields = target?.fields ?? target ?? {};
         const system = String(fields.Planet ?? fields.planet ?? fields.name ?? fields.Grid ?? fields.grid ?? "Restricted destination").trim();
@@ -2822,6 +2832,12 @@
         const previousShipGrid = dashboard.dataset.shipGrid || getLiveState().shipGrid || DEFAULT_SHIP_GRID;
         const requestedLocation = input?.value || getLiveState().location || SCAN_LOCATION_NAME;
         const requestedRecord = await resolveLocationRecord(requestedLocation);
+
+        if (requestedRecord && !requestTacticalScanTierAuthorization(dashboard, requestedRecord)) {
+            setLocationStatus(dashboard, "Tactical scan blocked by destination navigation restrictions.", "error");
+            return;
+        }
+
         if (requestedRecord && !hasSystemNavData(requestedRecord, getDashboardNavData(dashboard))) {
             setLocationStatus(dashboard, "NavData package required for tactical reconnaissance.", "error");
             return;
