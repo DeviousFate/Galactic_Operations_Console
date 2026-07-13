@@ -49,9 +49,35 @@ async function main() {
         }
     }
 
-    const titles = [...new Set([...candidatesByRecord.values()].flatMap((candidates) => candidates.map((candidate) => candidate.title)))];
-    console.log(`Retrieving sector fields from ${titles.length} matching Wookieepedia pages.`);
-    const sectorsByTitle = await getSectorsByTitle(titles);
+    const categoryTitles = [...new Set([...candidatesByRecord.values()].flatMap((candidates) => candidates.map((candidate) => candidate.title)))];
+    console.log(`Retrieving sector fields from ${categoryTitles.length} matching Wookieepedia pages.`);
+    const categoryPagesByTitle = await getSectorsByTitle(categoryTitles);
+
+    const searchCandidatesByRecord = new Map();
+    const recordsWithoutCategoryMatch = records
+        .map((record, index) => ({ record, index }))
+        .filter(({ record, index }) => normalizeGrid(record.Grid) && !categoryErrorsByGrid.has(normalizeGrid(record.Grid)) && !candidatesByRecord.has(index));
+    for (let index = 0; index < recordsWithoutCategoryMatch.length; index += 1) {
+        const entry = recordsWithoutCategoryMatch[index];
+        const candidates = (await getSearchTitles(entry.record.Planet))
+            .map((title) => ({ title, rank: getTitleMatchRank(title, entry.record.Planet), source: "search" }))
+            .filter((candidate) => candidate.rank > 0)
+            .sort((left, right) => right.rank - left.rank || left.title.localeCompare(right.title));
+        if (candidates.length) searchCandidatesByRecord.set(entry.index, candidates);
+        if ((index + 1) % 25 === 0 || index === recordsWithoutCategoryMatch.length - 1) {
+            console.log(`Searched ${index + 1}/${recordsWithoutCategoryMatch.length} unmatched planet titles.`);
+        }
+    }
+
+    const searchTitles = [...new Set([...searchCandidatesByRecord.values()].flatMap((candidates) => candidates.map((candidate) => candidate.title)))];
+    const searchPagesByTitle = await getSectorsByTitle(searchTitles);
+    const pagesByTitle = new Map([...categoryPagesByTitle, ...searchPagesByTitle]);
+    const linkedSystemTitles = [...new Set([...pagesByTitle.values()]
+        .filter((page) => !page.sector && page.systemTitle)
+        .map((page) => page.systemTitle))];
+    console.log(`Following ${linkedSystemTitles.length} linked star-system records for unresolved sectors.`);
+    const systemPagesByTitle = await getSectorsByTitle(linkedSystemTitles);
+    systemPagesByTitle.forEach((page, title) => pagesByTitle.set(title, page));
 
     const matches = [];
     const unresolved = [];
@@ -66,27 +92,26 @@ async function main() {
             return;
         }
 
-        const candidates = candidatesByRecord.get(index) ?? [];
+        const candidates = candidatesByRecord.get(index) ?? searchCandidatesByRecord.get(index) ?? [];
         if (!candidates.length) {
             unresolved.push(createUnresolvedRecord(record, "No matching page title in the Wookieepedia grid category."));
             return;
         }
 
-        const selected = candidates.find((candidate) => sectorsByTitle.get(candidate.title)?.sector);
-        if (!selected) {
-            unresolved.push(createUnresolvedRecord(record, "Matching Wookieepedia page has no usable sector field.", candidates[0].title));
+        const resolved = findResolvedCandidate(candidates, pagesByTitle);
+        if (!resolved) {
+            unresolved.push(createUnresolvedRecord(record, "Matching Wookieepedia page and linked system have no usable sector field.", candidates[0].title));
             return;
         }
 
-        const result = sectorsByTitle.get(selected.title);
         matches.push({
             Planet: record.Planet,
             Grid: record.Grid,
             CurrentSector: record.Sector,
-            WookieepediaTitle: result.title,
-            WookieepediaSector: result.sector,
-            MatchType: selected.rank >= 200 ? "Exact title" : "System or continuity variant",
-            SourceUrl: getPageUrl(result.title)
+            WookieepediaTitle: resolved.page.title,
+            WookieepediaSector: resolved.page.sector,
+            MatchType: getMatchType(resolved),
+            SourceUrl: getPageUrl(resolved.page.title)
         });
     });
 
@@ -133,13 +158,32 @@ async function getSectorsByTitle(titles) {
         Object.values(data.query?.pages ?? {}).forEach((page) => {
             if (page.missing) return;
             const content = page.revisions?.[0]?.slots?.main?.["*"] ?? page.revisions?.[0]?.["*"] ?? "";
-            sectorsByTitle.set(page.title, { title: page.title, sector: extractSector(content) });
+            sectorsByTitle.set(page.title, {
+                title: page.title,
+                sector: extractSector(content),
+                systemTitle: extractSystemTitle(content)
+            });
+        });
+        (data.query?.redirects ?? []).forEach((redirect) => {
+            const page = sectorsByTitle.get(redirect.to);
+            if (page) sectorsByTitle.set(redirect.from, page);
         });
         if ((index + 1) % 20 === 0 || index === batches.length - 1) {
             console.log(`Read ${Math.min((index + 1) * 25, titles.length)}/${titles.length} matching page records.`);
         }
     }
     return sectorsByTitle;
+}
+
+async function getSearchTitles(planet) {
+    const data = await requestApi({
+        action: "query",
+        list: "search",
+        srsearch: planet,
+        srnamespace: "0",
+        srlimit: "10"
+    });
+    return [...new Set((data.query?.search ?? []).map((result) => result.title))];
 }
 
 async function requestApi(parameters, attempt = 0) {
@@ -160,10 +204,35 @@ async function requestApi(parameters, attempt = 0) {
 }
 
 function extractSector(content) {
-    const match = String(content ?? "").match(/^[ \t]*\|[ \t]*sector[ \t]*=[ \t]*([^\r\n]*)/im);
+    return extractInfoboxValue(content, "sector");
+}
+
+function extractSystemTitle(content) {
+    return extractInfoboxValue(content, "system");
+}
+
+function extractInfoboxValue(content, parameter) {
+    const escapedParameter = parameter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const match = String(content ?? "").match(new RegExp(`^[ \\t]*\\|[ \\t]*${escapedParameter}[ \\t]*=[ \\t]*([^\\r\\n]*)`, "im"));
     if (!match) return "";
-    const sector = cleanWikitext(match[1]);
-    return /^(?:none|unknown|n\/?a)$/i.test(sector) ? "" : sector;
+    const value = cleanWikitext(match[1]);
+    return /^(?:none|unknown|n\/?a)$/i.test(value) ? "" : value;
+}
+
+function findResolvedCandidate(candidates, pagesByTitle) {
+    for (const candidate of candidates) {
+        const page = pagesByTitle.get(candidate.title);
+        if (page?.sector) return { candidate, page, viaSystem: false };
+        const systemPage = page?.systemTitle ? pagesByTitle.get(page.systemTitle) : null;
+        if (systemPage?.sector) return { candidate, page: systemPage, viaSystem: true };
+    }
+    return null;
+}
+
+function getMatchType(resolved) {
+    if (resolved.viaSystem) return "Linked system";
+    if (resolved.candidate.source === "search") return "Search result";
+    return resolved.candidate.rank >= 200 ? "Exact title" : "System or continuity variant";
 }
 
 function cleanWikitext(value) {
@@ -178,6 +247,7 @@ function cleanWikitext(value) {
         .replace(/''/g, "")
         .replace(/<[^>]+>/g, "")
         .replace(/\/(?:Legends|Canon)$/i, "")
+        .replace(/^\*+\s*/, "")
         .replace(/\s+/g, " ")
         .trim();
 }
