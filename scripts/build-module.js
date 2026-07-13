@@ -6,6 +6,7 @@ const sourceFiles = [
     "scripts/modules/startup-sequence.js",
     "scripts/modules/station-data.js",
     "scripts/modules/journals.js",
+    "scripts/modules/fleet-journals.js",
     "scripts/modules/warnings.js",
     "scripts/modules/nav-routing.js",
     "scripts/modules/map-ui.js",

@@ -324,7 +324,10 @@
     const GRID_ALIGNMENT_UNLOCKED_SETTING_KEY = "gridAlignmentUnlocked";
     const RESTRICTION_TIER_ACCESS_SETTING_KEY = "restrictionTierAccess";
     const NAV_DATA_SETTING_KEY = "navData";
+    const NAV_DATA_FOG_ENABLED_SETTING_KEY = "navDataFogEnabled";
+    const TIER_MAP_VISION_RESTRICTED_SETTING_KEY = "tierMapVisionRestricted";
     const MAP_INDICATORS_HIDDEN_SETTING_KEY = "mapIndicatorsHidden";
+    const SECTOR_RECON_SETTING_KEY = "sectorRecon";
     const WARNING_SYSTEM_VISITS_SETTING_KEY = "warningSystemVisits";
     const LIVE_HAIL_LOG_SETTING_KEY = "liveHailLog";
     const COMMLINK_ALERT_SETTING_KEY = "commlinkAlertActive";
@@ -334,6 +337,12 @@
     const STATION_JOURNAL_FLAG = "stationBriefing";
     const STATION_JOURNAL_MANIFEST_SETTING_KEY = "stationJournalManifestVersion";
     const STATION_JOURNAL_MANIFEST_VERSION = 1;
+    const FLEET_JOURNAL_FOLDER_NAME = "Galactic Operations Console - Imperial Intelligence";
+    const FLEET_JOURNAL_NAME = "Imperial Fleet Disposition";
+    const FLEET_JOURNAL_FLAG = "imperialFleetDisposition";
+    const FLEET_JOURNAL_PAGE_FLAG = "imperialFleetDispositionPage";
+    const FLEET_JOURNAL_MANIFEST_SETTING_KEY = "fleetJournalManifestVersion";
+    const FLEET_JOURNAL_MANIFEST_VERSION = 1;
     const SOCKET_NAME = `module.${MODULE_ID}`;
     const RESTRICTION_TIERS = [
         {
@@ -454,6 +463,81 @@
         0: "> Encryption bypass: complete.",
         1: "> Authentication spoof: complete."
     };
+    const SECTOR_RECON_TRAFFIC_REPORTS = {
+        empty: [
+            "No transponder traffic detected beyond distant navigation beacons.",
+            "The sector is quiet; only background comm static crosses the tactical band.",
+            "No active approach vectors registered within the local grid.",
+            "Sensor returns show cold debris and no powered vessels.",
+            "Civilian lanes are vacant. Long-range contacts are departing the sector.",
+            "No verified traffic. A single inactive relay buoy remains on station.",
+            "The grid is clear of commercial signatures and routine shipping.",
+            "Only stellar interference and dormant transponder echoes are present.",
+            "No vessels are holding position or requesting transit clearance.",
+            "Tactical sweep complete: no active civilian or military contacts resolved."
+        ],
+        low: [
+            "One light freighter is moving outbound on a routine trade vector.",
+            "A civilian shuttle is holding at the grid edge pending a route update.",
+            "Two distant tramp freighters are exchanging narrowband traffic.",
+            "A courier craft crossed the grid on a direct hyperspace approach.",
+            "Sparse merchant traffic follows a marked but lightly used corridor.",
+            "A small bulk hauler is conducting a slow sensor calibration pass.",
+            "One independent transport and a service tug share the local traffic band.",
+            "A survey vessel is charting a minor gravitational disturbance.",
+            "A local passenger shuttle reports routine, delayed operations.",
+            "Two unarmed cargo pods are being recovered by a light transport."
+        ],
+        standard: [
+            "Routine merchant traffic occupies established approach and departure vectors.",
+            "Several freighters are queuing for clearance while civilian shuttles cross the grid.",
+            "A mixed group of haulers, couriers, and passenger craft maintains normal spacing.",
+            "Commercial traffic is steady; transponder density matches a regular trade lane.",
+            "Docking-control traffic is active, with multiple vessels awaiting vector assignments.",
+            "Independent transports and scheduled shuttles are using parallel local lanes.",
+            "A civilian convoy is transiting under standard navigation lights.",
+            "Freight movement is orderly, with no unresolved collision or distress signals.",
+            "Multiple small craft are conducting routine refueling and cargo-transfer maneuvers.",
+            "The grid shows normal system traffic with predictable course corrections."
+        ],
+        high: [
+            "Heavy commercial traffic fills the grid; approach vectors are congested but controlled.",
+            "Freighters, shuttles, and service craft are stacked across multiple clearance lanes.",
+            "A dense convoy movement is forcing local traffic control to issue holding patterns.",
+            "Numerous cargo transports are maneuvering around active refueling operations.",
+            "The grid is saturated with civilian transponders and frequent vector corrections.",
+            "Merchant activity is elevated; several vessels are broadcasting priority docking requests.",
+            "A busy trade surge has created overlapping shuttle, courier, and hauler traffic.",
+            "Multiple bulk freighters are moving in formation with escort-capable support craft.",
+            "Traffic-control channels are crowded as civilian vessels negotiate temporary routes.",
+            "High-volume shipping activity is masking individual contacts beyond short sensor range."
+        ]
+    };
+    const SECTOR_RECON_IMPERIAL_ACTIVITY = [
+        "Possible Imperial routine activity: an Arquitens-class light cruiser is conducting a distant customs circuit.",
+        "Possible Imperial routine activity: a Gozanti-class patrol carrier is moving between scheduled inspection points.",
+        "Possible Imperial routine activity: a TIE/ln flight is performing a standard navigation-lane sweep.",
+        "Possible Imperial routine activity: an Imperial Customs corvette is querying transponders along the trade corridor.",
+        "Possible Imperial routine activity: a system-patrol gunboat is escorting a logistics shuttle.",
+        "Possible Imperial routine activity: a survey corvette is recalibrating long-range sensor buoys.",
+        "Possible Imperial routine activity: a Gozanti-class carrier is rotating a routine patrol section.",
+        "Possible Imperial routine activity: an Imperial liaison shuttle is moving under diplomatic routing codes.",
+        "Possible Imperial routine activity: a customs boarding team is staged aboard a nearby patrol vessel.",
+        "Possible Imperial routine activity: a TIE reconnaissance pair is conducting a passive sensor pass."
+    ];
+    const SECTOR_RECON_HEIGHTENED_IMPERIAL_ACTIVITY = [
+        "Possible Imperial patrol activity: an Arquitens-class light cruiser is holding on an interdiction-ready vector.",
+        "Possible Imperial patrol activity: a Gozanti-class carrier has deployed a TIE/ln inspection screen.",
+        "Possible Imperial patrol activity: an Imperial Customs corvette is actively matching transponders against a restricted-watch list.",
+        "Possible Imperial patrol activity: a TIE reconnaissance flight is shadowing high-value traffic through the local corridor.",
+        "Possible Imperial patrol activity: a Victory-class destroyer signature has been detected at long range on a sector-security route.",
+        "Possible Imperial patrol activity: a patrol gunboat section is conducting close-range cargo verification sweeps.",
+        "Possible Imperial patrol activity: a Gozanti-class carrier is staging boarding teams near the hyperlane approach.",
+        "Possible Imperial patrol activity: an Arquitens-class cruiser is coordinating a rolling sensor checkpoint.",
+        "Possible Imperial patrol activity: an Imperial logistics escort is screening traffic for route deviations.",
+        "Possible Imperial patrol activity: a TIE/ln flight is maintaining a visible deterrence orbit near the grid boundary."
+    ];
+    const SECTOR_RECON_NO_IMPERIAL_ACTIVITY = "No distinct Imperial patrol or routine-activity signature resolved.";
 
     const planetImageFiles = [
         "ALDERAAN (DESTROYED).png",
@@ -561,6 +645,7 @@
     let gridNavDataByGrid = {};
     let gridRegionByGrid = {};
     let gridRegionCoordinates = [];
+    let sectorReconHyperlaneGrids;
     let activeGridAlignmentEdit = null;
     let activeRouteMarkerDrag = null;
     let codexStartupPlayed = false;
@@ -809,6 +894,9 @@
         });
         dashboard.querySelector("[data-action='generate-station-journals']")?.addEventListener("click", () => {
             generateStationJournalsFromDashboard(dashboard);
+        });
+        dashboard.querySelector("[data-action='generate-fleet-journal']")?.addEventListener("click", () => {
+            generateFleetJournalFromDashboard(dashboard);
         });
         dashboard.querySelector("[data-action='refresh-diagnostics']")?.addEventListener("click", () => {
             void renderDiagnostics(dashboard, { refreshAsset: true });
@@ -1393,6 +1481,22 @@
         }
     }
 
+    function getNavDataFogEnabled() {
+        try {
+            return Boolean(game.settings.get(MODULE_ID, NAV_DATA_FOG_ENABLED_SETTING_KEY));
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function getTierMapVisionRestricted() {
+        try {
+            return Boolean(game.settings.get(MODULE_ID, TIER_MAP_VISION_RESTRICTED_SETTING_KEY));
+        } catch (error) {
+            return false;
+        }
+    }
+
     function getDashboardNavData(dashboard) {
         try {
             return sanitizeNavData(JSON.parse(dashboard.dataset.navData || "{}"));
@@ -1434,11 +1538,11 @@
             || hasNavDataValue("sectors", fields.Sector ?? fields.sector, navData);
     }
 
-    function hasGridNavData(grid, navData = getNavData()) {
+    function hasGridNavData(grid, navData = getNavData(), { enforceRestrictionClearance = true } = {}) {
         const normalizedGrid = normalizeGrid(grid);
         if (game.user?.isGM) return true;
         if (!normalizedGrid) return false;
-        if (!hasRestrictedNavDataClearance({ grid: normalizedGrid })) {
+        if (enforceRestrictionClearance && !hasRestrictedNavDataClearance({ grid: normalizedGrid })) {
             return false;
         }
 
@@ -1450,6 +1554,12 @@
             || (gridNavData.sectors || []).some((sector) => hasNavDataValue("sectors", sector, navData))
             || (gridNavData.regions || []).some((region) => hasNavDataValue("regions", region, navData))
             || hasNavDataValue("regions", gridRegion, navData);
+    }
+
+    function hasGridMapVision(grid, navData = getNavData()) {
+        return hasGridNavData(grid, navData, {
+            enforceRestrictionClearance: getTierMapVisionRestricted()
+        });
     }
 
     function hasAstroNavTargetData(target, navData = getNavData()) {
@@ -1509,6 +1619,12 @@
     function applyNavDataToOpenDashboards(navData) {
         document.querySelectorAll(".imperial-star-log-app .isl-dashboard").forEach((dashboard) => {
             applyNavDataToDashboard(dashboard, navData);
+        });
+    }
+
+    function applyNavDataFogToOpenDashboards() {
+        document.querySelectorAll(".imperial-star-log-app .isl-dashboard").forEach((dashboard) => {
+            renderGridOverlay(dashboard, getGridCalibration());
         });
     }
 
@@ -1941,7 +2057,8 @@
             getDashboardMapIndicatorsHidden,
             getDashboardRestrictionTierAccess,
             getDashboardNavData,
-            hasGridNavData,
+            getNavDataFogEnabled,
+            hasGridMapVision,
             hasRestrictionTierAccess,
             moveShipTokenFromMapClick,
             gridFromMapPointer,
@@ -1979,7 +2096,7 @@
         const point = gridToMapPoint(grid, getGridCalibration());
         if (!tooltip || !point) return;
 
-        const known = hasGridNavData(grid, getDashboardNavData(dashboard));
+        const known = hasGridMapVision(grid, getDashboardNavData(dashboard));
         tooltip.textContent = known ? `GRID ${grid}` : "NAVDATA ENCRYPTED";
         tooltip.style.left = `${point.x}%`;
         tooltip.style.top = `${point.y}%`;
@@ -2041,6 +2158,7 @@
             isPrimaryActiveGM,
             hasActiveGM,
             applyLiveStateToOpenDashboards,
+            handleShipGridChanged: clearSectorReconOnShipGridChanged,
             triggerFirstTimeSystemWarning,
             setLiveUpdateStatus
         };
@@ -2048,6 +2166,178 @@
 
     function getLiveState() {
         return getStateSyncModule().getLiveState(getStateSyncConfig());
+    }
+
+    function getDefaultSectorReconState() {
+        return { grid: "", report: null };
+    }
+
+    function sanitizeSectorReconState(value = {}) {
+        const grid = normalizeGrid(value?.grid);
+        const report = value?.report;
+        if (!grid || !report || typeof report !== "object") return getDefaultSectorReconState();
+
+        const level = String(report.level ?? "").toLowerCase();
+        const readout = String(report.readout ?? "").trim();
+        const imperialActivity = String(report.imperialActivity ?? "").trim();
+        if (!Object.prototype.hasOwnProperty.call(SECTOR_RECON_TRAFFIC_REPORTS, level) || !readout || !imperialActivity) {
+            return getDefaultSectorReconState();
+        }
+        return { grid, report: { level, readout, imperialActivity } };
+    }
+
+    function getSectorReconState() {
+        try {
+            return sanitizeSectorReconState(game.settings.get(MODULE_ID, SECTOR_RECON_SETTING_KEY) || {});
+        } catch (error) {
+            return getDefaultSectorReconState();
+        }
+    }
+
+    function getSectorReconGridCoordinates(grid) {
+        const match = normalizeGrid(grid).match(/^([A-W])(\d{1,2})$/);
+        if (!match) return null;
+        return { column: MAP_GRID_COLUMNS.indexOf(match[1]), row: Number(match[2]) - 1 };
+    }
+
+    function getSectorReconGridDistance(leftGrid, rightGrid) {
+        const left = getSectorReconGridCoordinates(leftGrid);
+        const right = getSectorReconGridCoordinates(rightGrid);
+        if (!left || !right) return Number.POSITIVE_INFINITY;
+        return Math.max(Math.abs(left.column - right.column), Math.abs(left.row - right.row));
+    }
+
+    function getMajorHyperlaneReconGrids() {
+        if (sectorReconHyperlaneGrids) return sectorReconHyperlaneGrids;
+        const grids = new Set();
+        MAJOR_GALACTIC_HYPERLANES.forEach((hyperlane) => {
+            hyperlane.legs.forEach(([, fromGrid, , toGrid]) => {
+                const from = getSectorReconGridCoordinates(fromGrid);
+                const to = getSectorReconGridCoordinates(toGrid);
+                if (!from || !to) return;
+                const steps = Math.max(Math.abs(to.column - from.column), Math.abs(to.row - from.row));
+                for (let step = 0; step <= steps; step += 1) {
+                    const column = Math.round(from.column + ((to.column - from.column) * (step / Math.max(steps, 1))));
+                    const row = Math.round(from.row + ((to.row - from.row) * (step / Math.max(steps, 1))));
+                    if (MAP_GRID_COLUMNS[column] && row >= 0) grids.add(`${MAP_GRID_COLUMNS[column]}${row + 1}`);
+                }
+            });
+        });
+        sectorReconHyperlaneGrids = grids;
+        return sectorReconHyperlaneGrids;
+    }
+
+    function getSectorReconImperialEncounterProfile(grid) {
+        const normalizedGrid = normalizeGrid(grid);
+        const hyperlaneGrids = getMajorHyperlaneReconGrids();
+        const adjacentHyperlane = [...hyperlaneGrids].some((laneGrid) => getSectorReconGridDistance(normalizedGrid, laneGrid) <= HYPERLANE_ADJACENT_GRID_DISTANCE);
+        const adjacentRestricted = [...restrictedGridEntryByGrid.keys()]
+            .some((restrictedGrid) => getSectorReconGridDistance(normalizedGrid, restrictedGrid) <= 1);
+
+        if (adjacentHyperlane && adjacentRestricted) return { chance: 0.9, heightened: true };
+        if (adjacentRestricted) return { chance: 0.78, heightened: true };
+        if (adjacentHyperlane) return { chance: 0.62, heightened: false };
+        return { chance: 0.28, heightened: false };
+    }
+
+    function createSectorReconReport(grid) {
+        const levels = Object.keys(SECTOR_RECON_TRAFFIC_REPORTS);
+        const level = levels[Math.floor(Math.random() * levels.length)];
+        const traffic = SECTOR_RECON_TRAFFIC_REPORTS[level];
+        const imperialProfile = getSectorReconImperialEncounterProfile(grid);
+        const activityPool = imperialProfile.heightened
+            ? SECTOR_RECON_HEIGHTENED_IMPERIAL_ACTIVITY
+            : SECTOR_RECON_IMPERIAL_ACTIVITY;
+        const imperialActivity = Math.random() < imperialProfile.chance
+            ? activityPool[Math.floor(Math.random() * activityPool.length)]
+            : SECTOR_RECON_NO_IMPERIAL_ACTIVITY;
+        return {
+            level,
+            readout: traffic[Math.floor(Math.random() * traffic.length)],
+            imperialActivity
+        };
+    }
+
+    async function persistSectorReconState(state, requesterId = null) {
+        if (!game.user?.isGM) return getSectorReconState();
+        const next = sanitizeSectorReconState(state);
+        await game.settings.set(MODULE_ID, SECTOR_RECON_SETTING_KEY, next);
+        applySectorReconToOpenDashboards(next);
+        game.socket?.emit(SOCKET_NAME, { type: "sectorReconUpdated", state: next, requesterId });
+        return next;
+    }
+
+    async function clearSectorReconOnShipGridChanged(_previousState, nextState) {
+        const nextGrid = normalizeGrid(nextState?.shipGrid);
+        const activeRecon = getSectorReconState();
+        if (activeRecon.grid && activeRecon.grid !== nextGrid) {
+            await persistSectorReconState(getDefaultSectorReconState());
+        }
+    }
+
+    function renderSectorReconReport(dashboard, state = getSectorReconState()) {
+        const readout = dashboard.querySelector("[data-sector-recon-readout]");
+        if (!readout) return;
+
+        const currentGrid = normalizeGrid(dashboard.dataset.shipGrid || getLiveState().shipGrid);
+        if (!state.report || state.grid !== currentGrid) {
+            readout.textContent = "No active traffic analysis for the current grid.";
+            delete readout.dataset.state;
+            return;
+        }
+
+        readout.innerHTML = [
+            `Traffic level: ${escapeHtml(state.report.level)}.`,
+            escapeHtml(state.report.readout),
+            escapeHtml(state.report.imperialActivity)
+        ].join("<br>");
+        readout.dataset.state = "complete";
+    }
+
+    function applySectorReconToOpenDashboards(state) {
+        document.querySelectorAll(".imperial-star-log-app .isl-dashboard").forEach((dashboard) => {
+            renderSectorReconReport(dashboard, state);
+        });
+    }
+
+    async function assignSectorRecon(grid, requesterId = null) {
+        const normalizedGrid = normalizeGrid(grid);
+        if (!normalizedGrid || restrictedGridEntryByGrid.has(normalizedGrid)) return getDefaultSectorReconState();
+
+        const current = getSectorReconState();
+        const next = current.grid === normalizedGrid && current.report
+            ? current
+            : { grid: normalizedGrid, report: createSectorReconReport(normalizedGrid) };
+        return persistSectorReconState(next, requesterId);
+    }
+
+    async function processSectorReconRequest({ location, grid, requesterId = null }) {
+        const normalizedGrid = normalizeGrid(grid);
+        if (!normalizedGrid || restrictedGridEntryByGrid.has(normalizedGrid)) return null;
+        await persistLiveState({ location, shipGrid: normalizedGrid }, requesterId);
+        return assignSectorRecon(normalizedGrid, requesterId);
+    }
+
+    async function requestSectorRecon(dashboard, location, grid) {
+        const normalizedGrid = normalizeGrid(grid);
+        if (!normalizedGrid) return null;
+
+        if (game.user?.isGM && isPrimaryActiveGM()) {
+            return processSectorReconRequest({ location, grid: normalizedGrid, requesterId: game.user.id });
+        }
+        if (!hasActiveGM()) {
+            setLocationStatus(dashboard, "Active GM required to complete tactical reconnaissance.", "error");
+            return null;
+        }
+
+        game.socket?.emit(SOCKET_NAME, {
+            type: "requestSectorRecon",
+            requesterId: game.user?.id,
+            location,
+            grid: normalizedGrid
+        });
+        setLocationStatus(dashboard, "Tactical reconnaissance request transmitted.", "dirty");
+        return null;
     }
 
     function normalizeLiveState(state = {}) {
@@ -2084,7 +2374,6 @@
         const shipGrid = normalizeGrid(record.fields.Grid) || previousShipGrid;
         const input = dashboard.querySelector("#isl-location-input");
         if (input) input.value = location;
-        setShipLocationOnDashboard(dashboard, location);
 
         await requestLiveStateUpdate(dashboard, { location, shipGrid }, {
             successStatus: "Mission theater broadcast to operational telemetry.",
@@ -2133,7 +2422,6 @@
 
         dashboard.dataset.liveLocation = liveState.location;
         if (input && updateLocation) input.value = liveState.location;
-        setShipLocationOnDashboard(dashboard, liveState.location);
 
         if (updateLocation) {
             await showCurrentLocation(dashboard, liveState.location);
@@ -2143,6 +2431,8 @@
             setShipGridOnDashboard(dashboard, liveState.shipGrid);
             renderGridOverlay(dashboard, getGridCalibration());
         }
+
+        renderSectorReconReport(dashboard);
 
         setLiveStateStatus(dashboard, "Operational telemetry synchronized.", "");
     }
@@ -2228,9 +2518,6 @@
 
         if (!point || !token) {
             if (readout) readout.textContent = "Vessel Grid: Unknown";
-            dashboard.querySelectorAll("[data-ship-grid-readout]").forEach((shipReadout) => {
-                shipReadout.textContent = "Unknown";
-            });
             setAstroNavOriginGrid(dashboard, "");
             return;
         }
@@ -2240,17 +2527,7 @@
         token.title = `Vessel Grid: ${normalizedGrid}`;
         token.setAttribute("aria-label", `Vessel position ${normalizedGrid}`);
         if (readout) readout.textContent = `Vessel Grid: ${normalizedGrid}`;
-        dashboard.querySelectorAll("[data-ship-grid-readout]").forEach((shipReadout) => {
-            shipReadout.textContent = normalizedGrid;
-        });
         setAstroNavOriginGrid(dashboard, normalizedGrid);
-    }
-
-    function setShipLocationOnDashboard(dashboard, location) {
-        const value = String(location ?? DEFAULT_LOCATION_NAME).trim() || DEFAULT_LOCATION_NAME;
-        dashboard.querySelectorAll("[data-ship-location-readout]").forEach((readout) => {
-            readout.textContent = value;
-        });
     }
 
     function setAstroNavOriginGrid(dashboard, grid) {
@@ -2944,12 +3221,19 @@
         if (!record) return;
 
         const grid = normalizeGrid(record.fields.Grid);
-        await requestLiveStateUpdate(dashboard, {
-            location: record.fields.Planet || input?.value || DEFAULT_LOCATION_NAME,
-            shipGrid: grid || previousShipGrid
-        });
+        const location = record.fields.Planet || input?.value || DEFAULT_LOCATION_NAME;
+        const restriction = getRestrictionForRecord(record);
+        if (restriction) {
+            await requestLiveStateUpdate(dashboard, { location, shipGrid: grid || previousShipGrid });
+            renderSectorReconReport(dashboard, getDefaultSectorReconState());
+            setLocationStatus(dashboard, "Restricted grid traffic analysis withheld by Imperial security protocol.", "error");
+            return;
+        }
 
-        setLocationStatus(dashboard, grid ? `Tactical scan complete: Grid ${grid}.` : "Tactical scan complete.", "");
+        const recon = await requestSectorRecon(dashboard, location, grid || previousShipGrid);
+        if (recon?.report) {
+            setLocationStatus(dashboard, `Tactical scan complete: Grid ${recon.grid}. ${recon.report.level.toUpperCase()} traffic profile assigned.`, "");
+        }
     }
 
     function getRestrictionForRecord(record) {
@@ -2987,7 +3271,6 @@
         }
 
         renderLocationRecord(dashboard, record, options.warning);
-        setShipLocationOnDashboard(dashboard, record.fields.Planet || rawName || DEFAULT_LOCATION_NAME);
         setShipGridOnDashboard(dashboard, record.fields.Grid);
         setLocationStatus(dashboard, options.warning ? "Tactical anomaly logged." : "Mission theater synchronized.", options.warning ? "dirty" : "");
         return record;
@@ -3513,15 +3796,105 @@
             };
 
             if (/stealth|cloak|cloaking/.test(classification)) inventory.stealth.push(entry);
-            else if (/hyper\s*drive/.test(classification)) inventory.hyperdrives.push(entry);
+            else if (/hyper\s*drive/.test(classification)) {
+                entry.hyperdriveClass = getHyperdriveItemClass(item);
+                inventory.hyperdrives.push(entry);
+            }
             else if (/shield/.test(classification)) inventory.shields.push(entry);
             else if (/armor|armour/.test(classification)) inventory.armor.push(entry);
         });
 
-        Object.values(inventory).forEach((entries) => {
+        inventory.hyperdrives = consolidateHyperdriveEntries(inventory.hyperdrives);
+        [inventory.armor, inventory.shields, inventory.stealth].forEach((entries) => {
             entries.sort((left, right) => left.name.localeCompare(right.name));
         });
         return inventory;
+    }
+
+    function getHyperdriveItemClass(item) {
+        const values = [
+            item?.system?.hyperdrive?.class,
+            item?.system?.hyperdriveClass,
+            item?.system?.class,
+            item?.system?.properties?.hyperdriveClass,
+            item?.name
+        ];
+
+        for (const value of values) {
+            const normalized = typeof value === "object" ? value?.value ?? value?.class : value;
+            const match = String(normalized ?? "").match(/(?:class\s*)?(\d+(?:\.\d+)?)/i);
+            const rating = Number(match?.[1]);
+            if (Number.isFinite(rating) && rating > 0) return rating;
+        }
+        return null;
+    }
+
+    function consolidateHyperdriveEntries(entries) {
+        const mainSlots = [];
+        const backupSlots = [];
+        const classEntries = [];
+        const remaining = [];
+
+        entries.forEach((entry) => {
+            const name = String(entry.name ?? "");
+            if (/\bbackup\s+hyper\s*drive\b/i.test(name)) {
+                backupSlots.push(entry);
+                return;
+            }
+            if (/\bhyper\s*drive\s+slot\b/i.test(name)) {
+                mainSlots.push(entry);
+                return;
+            }
+            if (Number.isFinite(entry.hyperdriveClass)) {
+                classEntries.push(entry);
+                return;
+            }
+            remaining.push(entry);
+        });
+
+        const availableClasses = [...classEntries];
+        const takeClass = (direction) => {
+            if (!availableClasses.length) return null;
+            let selectedIndex = 0;
+            availableClasses.forEach((entry, index) => {
+                if (direction === "lowest"
+                    ? entry.hyperdriveClass < availableClasses[selectedIndex].hyperdriveClass
+                    : entry.hyperdriveClass > availableClasses[selectedIndex].hyperdriveClass) {
+                    selectedIndex = index;
+                }
+            });
+            return availableClasses.splice(selectedIndex, 1)[0].hyperdriveClass;
+        };
+
+        const mainDirectClasses = mainSlots.map((entry) => entry.hyperdriveClass).filter(Number.isFinite);
+        const backupDirectClasses = backupSlots.map((entry) => entry.hyperdriveClass).filter(Number.isFinite);
+        const mainClass = mainDirectClasses.length
+            ? Math.min(...mainDirectClasses)
+            : mainSlots.length ? takeClass("lowest") : null;
+        const backupClass = backupDirectClasses.length
+            ? Math.max(...backupDirectClasses)
+            : backupSlots.length ? takeClass("highest") : null;
+        const combined = [];
+        if (Number.isFinite(mainClass)) {
+            combined.push({ name: `Main Hyperdrive Class ${formatHyperdriveClass(mainClass)}`, quantity: null });
+        } else {
+            remaining.push(...mainSlots);
+        }
+        if (Number.isFinite(backupClass)) {
+            combined.push({ name: `Backup Hyperdrive Class ${formatHyperdriveClass(backupClass)}`, quantity: null });
+        } else {
+            remaining.push(...backupSlots);
+        }
+
+        return [
+            ...combined,
+            ...remaining.sort((left, right) => left.name.localeCompare(right.name)),
+            ...availableClasses.sort((left, right) => left.name.localeCompare(right.name))
+        ];
+    }
+
+    function formatHyperdriveClass(value) {
+        return Number.isInteger(value) ? String(value) : String(value).replace(/0+$/, "").replace(/\.$/, "");
     }
 
     function getPrimaryVesselTemplateData() {
@@ -3810,6 +4183,38 @@
 
     async function generateStationJournalsFromDashboard(dashboard) {
         return getJournalModule().generateFromDashboard(dashboard, getStationJournalModuleConfig());
+    }
+
+    function getFleetJournalModule() {
+        const fleetJournalModule = globalThis.GalacticOperationsConsoleModules?.fleetJournals;
+        if (!fleetJournalModule) throw new Error(`${MODULE_ID} | Fleet journal module was not loaded.`);
+        return fleetJournalModule;
+    }
+
+    function getFleetJournalModuleConfig() {
+        return {
+            moduleId: MODULE_ID,
+            folderName: FLEET_JOURNAL_FOLDER_NAME,
+            journalName: FLEET_JOURNAL_NAME,
+            journalFlag: FLEET_JOURNAL_FLAG,
+            pageFlag: FLEET_JOURNAL_PAGE_FLAG,
+            manifestSettingKey: FLEET_JOURNAL_MANIFEST_SETTING_KEY,
+            manifestVersion: FLEET_JOURNAL_MANIFEST_VERSION,
+            tiers: RESTRICTION_TIERS,
+            isPrimaryActiveGM
+        };
+    }
+
+    async function syncFleetJournal(options = {}) {
+        return getFleetJournalModule().sync(getFleetJournalModuleConfig(), options);
+    }
+
+    async function ensureFleetJournalArchive() {
+        return getFleetJournalModule().ensureArchive(getFleetJournalModuleConfig());
+    }
+
+    async function generateFleetJournalFromDashboard(dashboard) {
+        return getFleetJournalModule().generateFromDashboard(dashboard, getFleetJournalModuleConfig());
     }
 
     function showPlanetRecord(dashboard, rawName) {
@@ -4107,6 +4512,23 @@
 
         if (message.type === "navDataChanged") {
             applyNavDataToOpenDashboards(message.navData);
+            return;
+        }
+
+        if (message.type === "requestSectorRecon") {
+            if (game.user?.isGM && isPrimaryActiveGM()) {
+                processSectorReconRequest(message).catch((error) => {
+                    console.error(`${MODULE_ID} | Failed to process sector reconnaissance request`, error);
+                });
+            }
+            return;
+        }
+
+        if (message.type === "sectorReconUpdated") {
+            applySectorReconToOpenDashboards(message.state);
+            if (message.requesterId === game.user?.id && message.state?.report) {
+                ui.notifications?.info("Tactical traffic analysis synchronized.");
+            }
             return;
         }
 
@@ -4517,6 +4939,30 @@
             }
         });
 
+        game.settings.register(MODULE_ID, NAV_DATA_FOG_ENABLED_SETTING_KEY, {
+            name: "Enable NavData Map Fog",
+            hint: "Hide map grids without party NavData. Disabling this affects only the visual overlay; navigation and restriction authorization remain enforced.",
+            scope: "world",
+            config: true,
+            type: Boolean,
+            default: false,
+            onChange: () => {
+                applyNavDataFogToOpenDashboards();
+            }
+        });
+
+        game.settings.register(MODULE_ID, TIER_MAP_VISION_RESTRICTED_SETTING_KEY, {
+            name: "Restrict Tier Map Vision",
+            hint: "Hide Tier 3-5 map grids until matching clearance is accepted. Disabling this affects only map visibility; restricted actions still require authorization.",
+            scope: "world",
+            config: true,
+            type: Boolean,
+            default: false,
+            onChange: () => {
+                applyNavDataFogToOpenDashboards();
+            }
+        });
+
         game.settings.register(MODULE_ID, MAP_INDICATORS_HIDDEN_SETTING_KEY, {
             name: "Galactic Operations Console Sector Indicator Visibility",
             scope: "client",
@@ -4527,6 +4973,17 @@
                 document.querySelectorAll(".imperial-star-log-app .isl-dashboard").forEach((dashboard) => {
                     applyMapIndicatorsHiddenToDashboard(dashboard, hidden);
                 });
+            }
+        });
+
+        game.settings.register(MODULE_ID, SECTOR_RECON_SETTING_KEY, {
+            name: "Galactic Operations Console Sector Reconnaissance",
+            scope: "world",
+            config: false,
+            type: Object,
+            default: getDefaultSectorReconState(),
+            onChange: (state) => {
+                applySectorReconToOpenDashboards(sanitizeSectorReconState(state));
             }
         });
 
@@ -4596,6 +5053,14 @@
             default: 0
         });
 
+        game.settings.register(MODULE_ID, FLEET_JOURNAL_MANIFEST_SETTING_KEY, {
+            name: "Galactic Operations Console Fleet Journal Manifest Version",
+            scope: "world",
+            config: false,
+            type: Number,
+            default: 0
+        });
+
         game.keybindings?.register(MODULE_ID, "open", {
             name: "Open Galactic Operations Console",
             hint: "Open the Galactic Operations Console dashboard.",
@@ -4650,6 +5115,7 @@
             getCommlinkAlertActive,
             toggleCommlinkAlert,
             syncStationJournals,
+            syncFleetJournal,
             planets: planetRecords.map((record) => ({ ...record }))
         };
 
@@ -4662,6 +5128,9 @@
         if (game.user?.isGM && isPrimaryActiveGM()) {
             ensureStationJournalArchive().catch((error) => {
                 console.error(`${MODULE_ID} | Failed to create station briefing journals`, error);
+            });
+            ensureFleetJournalArchive().catch((error) => {
+                console.error(`${MODULE_ID} | Failed to create Imperial fleet disposition journal`, error);
             });
         }
     });

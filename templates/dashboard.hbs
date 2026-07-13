@@ -72,6 +72,7 @@
                 <div class="isl-form-actions">
                     <button class="isl-action-button" type="button" data-action="scan-sector">Run Tactical Scan</button>
                 </div>
+                <div class="isl-sector-recon-readout" data-sector-recon-readout aria-live="polite">No active traffic analysis for the current grid.</div>
                 <div class="isl-location-status" id="isl-location-status">Mission theater database initializing.</div>
                 <label class="isl-toggle-row">
                     <input type="checkbox" data-map-indicators-hidden {{#if mapIndicatorsHidden}}checked{{/if}}>
@@ -110,9 +111,6 @@
                                 {{/if}}
                             </div>
                         </div>
-                        Mission Theater: <span data-ship-location-readout>{{liveState.location}}</span><br>
-                        Current Grid: <span data-ship-grid-readout>{{liveState.shipGrid}}</span><br>
-                        Vessel Readiness: Sub-light engines nominal.<br>
                         <div data-deception-controls{{#unless primaryVessel.hasDeceptionSystems}} class="hidden"{{/unless}}>
                         Deception Suite: <span data-stealth-readout>{{#if stealthSystemsEngaged}}Engaged{{else}}Standby{{/if}}</span><br>
                         <br>
@@ -120,34 +118,6 @@
                         <div class="isl-ship-status" data-stealth-status>{{#if stealthSystemsEngaged}}Deception systems engaged.{{else}}Deception systems standby.{{/if}}</div>
                         </div>
                         <div class="isl-ship-status" data-live-state-status>Vessel telemetry synchronized.</div>
-                        <br>
-                        <b>/// LATERAL HULL PROJECTION ///</b><br>
-                        Profile: Sloped armored prow, tri-level aft housing.<br>
-                        <br>
-                        <b>/// DORSAL HULL PROJECTION ///</b><br>
-                        Chassis: Arrowhead hull, twin lateral thrust-fins.<br>
-                        <br>
-                        <b>/// DECK SCHEMATICS (3-TIER) ///</b><br>
-                        <br>
-                        <b>[DECK 3: UPPER - COMMAND]</b><br>
-                        &gt; Cockpit (4 stations)<br>
-                        &gt; Captain's Quarters (Secure)<br>
-                        &gt; Avionics &amp; Sensor Mainframe<br>
-                        &gt; Dorsal Gunner Turret Access<br>
-                        <br>
-                        <b>[DECK 2: MAIN - CREW]</b><br>
-                        &gt; Primary Airlock &amp; Boarding Ramp<br>
-                        &gt; Common Area / Galley<br>
-                        &gt; Crew Bunks (Sleeps 6)<br>
-                        &gt; Med-Bay (1 Bacta Tank)<br>
-                        &gt; Secure Armory<br>
-                        <br>
-                        <b>[DECK 1: LOWER - ENGINEERING]</b><br>
-                        &gt; Main Cargo Hold<br>
-                        &gt; Sub-light Engine Core<br>
-                        &gt; Hyperdrive Generator<br>
-                        &gt; Hidden Smuggling Compartments (Shielded)<br>
-                        &gt; Ventral Gunner Turret Access
                     </div>
                 </div>
             </section>
@@ -276,6 +246,17 @@
                         <button class="isl-action-button" type="button" data-action="generate-station-journals">Refresh Station Journals</button>
                     </div>
                     <div class="isl-form-status" data-station-journal-status>Station briefing archive standing by.</div>
+                </details>
+
+                <details class="isl-widget isl-confidential-widget isl-collapsible-section">
+                    <summary class="isl-widget-title">Imperial Fleet Disposition</summary>
+                    <div class="isl-data-text">
+                        Create or refresh the GM-only journal containing one classified fleet-disposition page for every restricted system.
+                    </div>
+                    <div class="isl-form-actions">
+                        <button class="isl-action-button" type="button" data-action="generate-fleet-journal">Refresh Fleet Journal</button>
+                    </div>
+                    <div class="isl-form-status" data-fleet-journal-status>Fleet disposition archive standing by.</div>
                 </details>
 
                 <details class="isl-widget isl-confidential-widget isl-collapsible-section">

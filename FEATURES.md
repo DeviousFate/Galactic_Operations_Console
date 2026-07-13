@@ -17,6 +17,7 @@ This document records the features currently implemented in the Foundry VTT modu
 - Displays the current mission theater from synchronized live location data: planet, grid, sector, region, and applicable restriction status.
 - Shows the GM-authored Mission Orders as a read-only briefing.
 - Provides a current-location tactical scan, subject to NavData and restricted-system authorization checks.
+- Sector Reconnaissance assigns one persistent empty, low, standard, or high traffic profile to each scanned non-restricted grid. The profile can include Imperial routine patrol activity, with materially higher encounter chances near major hyperlanes and restricted grids; it repeats unchanged while the vessel remains in that grid and clears when the ship departs.
 - Supports a player preference to suppress map indicators.
 
 ### Intel: Target Analysis
@@ -30,7 +31,7 @@ This document records the features currently implemented in the Foundry VTT modu
 ### Systems: Vessel Control
 
 - Can be linked by a GM to a Foundry Vehicle Actor using its UUID.
-- Reads vessel information and qualifying inventory entries for armor, hyperdrives, shields, stealth drives, and cloaking equipment.
+- Reads vessel information and qualifying inventory entries for armor, hyperdrives, shields, stealth drives, and cloaking equipment. Hyperdrive Slot entries consolidate to the lowest Main Hyperdrive Class, while Backup Hyperdrive entries consolidate to the highest Backup Hyperdrive Class.
 - Does not use Starship Actions to populate vessel systems.
 - Shows Deception Systems controls only when the selected vessel has qualifying stealth or cloaking equipment.
 - Synchronizes the stealth-state control to all connected clients.
@@ -51,7 +52,7 @@ This document records the features currently implemented in the Foundry VTT modu
 - Supports right-click drag panning, double-click zoom in at the cursor grid, and double-click zoom out from a zoomed state.
 - Shows a grid-aligned focused-location marker, a party triangulation marker, planned transit line, hyperlane/restriction markers, and delayed grid-hover identification.
 - Keeps the party marker below planet-dossier popups.
-- Applies opaque limited-information fog to grids for which the party lacks NavData; restricted Tier 3+ systems remain obscured until cleared.
+- Can apply opaque limited-information fog to grids for which the party lacks NavData; the GM controls this with the world-level **Enable NavData Map Fog** setting, disabled by default. The separate **Restrict Tier Map Vision** setting controls whether Tier 3+ grids remain visually hidden before clearance; both settings affect only the map and default to disabled. Restricted navigation and analysis authorization remain enforced.
 - The GM can unlock grid alignment controls; normal users cannot move the party marker or alter calibration.
 
 ## Restricted Navigation and NavData
@@ -80,6 +81,7 @@ This document records the features currently implemented in the Foundry VTT modu
 - Provides restriction-tier authorization toggles, restriction details, and manual warning activation.
 - Provides NavData distribution controls and live-hail monitoring.
 - Generates or refreshes GM-only Foundry journal entries for station approach briefings.
+- Generates or refreshes the GM-only **Imperial Fleet Disposition** journal, with a classified page for every restricted system including tier rationale, assigned fleet composition, and engagement protocol.
 - Includes system diagnostics for NavData, warnings, clearance codes, assets, active GM, and socket status.
 - Provides mission-control, vessel, map-grid alignment, and station-journal administration.
 

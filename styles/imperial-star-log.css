@@ -897,6 +897,23 @@
     text-transform: uppercase;
 }
 
+.imperial-star-log-app .isl-sector-recon-readout {
+    min-height: 3.9em;
+    margin: 10px 0 8px;
+    border-left: 2px solid #15f2fd;
+    padding: 8px 10px;
+    background: rgba(21, 242, 253, 0.06);
+    color: #d8e6ea;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    text-transform: uppercase;
+}
+
+.imperial-star-log-app .isl-sector-recon-readout[data-state="complete"] {
+    border-left-color: #ffd24a;
+    color: #ffffff;
+}
+
 .imperial-star-log-app .isl-location-status[data-state="error"] {
     color: #ff7777;
 }

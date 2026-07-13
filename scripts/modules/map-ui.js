@@ -186,11 +186,13 @@
     }
 
     function renderNavDataFog(fragment, svg, calibration, navData, config) {
+        if (!config.getNavDataFogEnabled()) return;
+
         const unknownGrids = [];
         for (let column = 0; column < config.gridColumns.length; column += 1) {
             for (let row = 0; row < calibration.rows; row += 1) {
                 const grid = `${config.gridColumns[column]}${row + 1}`;
-                if (!config.hasGridNavData(grid, navData)) unknownGrids.push({ column, row });
+                if (!config.hasGridMapVision(grid, navData)) unknownGrids.push({ column, row });
             }
         }
         if (!unknownGrids.length) return;

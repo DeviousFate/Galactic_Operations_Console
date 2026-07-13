@@ -65,11 +65,15 @@
             const changedKeys = Object.keys(normalizedPartial);
             if (!changedKeys.length) return this.getLiveState(config);
 
+            const previousState = this.getLiveState(config);
             const state = normalizeLiveState({
-                ...this.getLiveState(config),
+                ...previousState,
                 ...normalizedPartial
             }, config);
             await game.settings.set(config.moduleId, config.liveStateSettingKey, state);
+            if (previousState.shipGrid !== state.shipGrid) {
+                await config.handleShipGridChanged?.(previousState, state);
+            }
             await config.applyLiveStateToOpenDashboards(state, { changedKeys });
             game.socket?.emit(config.socketName, {
                 type: "liveStateUpdated",
