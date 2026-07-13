@@ -1465,6 +1465,7 @@
         const next = sanitizeNavData(navData);
         dashboard.dataset.navData = JSON.stringify(next);
         renderNavDataLibrary(dashboard, next);
+        renderGridOverlay(dashboard, getGridCalibration());
         if (gridCoordinateRecords.length) populateLocationOptions(dashboard, gridCoordinateRecords);
     }
 
@@ -1901,6 +1902,8 @@
             normalizePlanetName,
             getDashboardMapIndicatorsHidden,
             getDashboardRestrictionTierAccess,
+            getDashboardNavData,
+            hasGridNavData,
             hasRestrictionTierAccess,
             moveShipTokenFromMapClick,
             gridFromMapPointer,
@@ -2063,6 +2066,7 @@
 
         if (updateShip) {
             setShipGridOnDashboard(dashboard, liveState.shipGrid);
+            renderGridOverlay(dashboard, getGridCalibration());
         }
 
         setLiveStateStatus(dashboard, "Operational telemetry synchronized.", "");

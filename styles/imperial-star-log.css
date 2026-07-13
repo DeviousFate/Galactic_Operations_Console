@@ -971,6 +971,19 @@
     pointer-events: none;
 }
 
+.imperial-star-log-app .isl-navdata-fog {
+    opacity: 0.98;
+    animation: isl-navdata-fog-flicker 3.8s steps(2, end) infinite;
+}
+
+@keyframes isl-navdata-fog-flicker {
+    0%, 16%, 100% { opacity: 0.98; }
+    17% { opacity: 0.91; }
+    18% { opacity: 0.98; }
+    62% { opacity: 0.95; }
+    63% { opacity: 0.98; }
+}
+
 .imperial-star-log-app .isl-route-overlay {
     position: absolute;
     inset: 0;

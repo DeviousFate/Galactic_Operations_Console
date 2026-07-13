@@ -4,6 +4,7 @@
     const modules = globalThis.GalacticOperationsConsoleModules ??= {};
     let activePan = null;
     let pendingMapClick = null;
+    let navDataFogPatternSerial = 0;
 
     modules.mapUi = {
         renderGridOverlay(dashboard, calibration, config) {
@@ -13,6 +14,7 @@
             svg.setAttribute("viewBox", "0 0 100 100");
             svg.setAttribute("preserveAspectRatio", "none");
             const fragment = document.createDocumentFragment();
+            const navData = config.getDashboardNavData(dashboard);
 
             if (!config.getDashboardMapIndicatorsHidden(dashboard)) {
                 const access = config.getDashboardRestrictionTierAccess(dashboard);
@@ -22,6 +24,8 @@
                     if (authorizedEntry && cell) renderRestrictedMarker(fragment, authorizedEntry, cell, calibration, config);
                 });
             }
+
+            renderNavDataFog(fragment, svg, calibration, navData, config);
 
             for (let col = 0; col <= config.gridColumns.length; col += 1) {
                 fragment.appendChild(createSvgElement("line", {
@@ -180,6 +184,58 @@
             tier: authorized[0].tier,
             stronghold: authorized.some((restriction) => restriction.stronghold)
         };
+    }
+
+    function renderNavDataFog(fragment, svg, calibration, navData, config) {
+        const unknownGrids = [];
+        for (let column = 0; column < config.gridColumns.length; column += 1) {
+            for (let row = 0; row < calibration.rows; row += 1) {
+                const grid = `${config.gridColumns[column]}${row + 1}`;
+                if (!config.hasGridNavData(grid, navData)) unknownGrids.push({ column, row });
+            }
+        }
+        if (!unknownGrids.length) return;
+
+        const patternId = getNavDataFogPatternId(svg);
+        fragment.appendChild(createNavDataFogDefinitions(patternId));
+        const width = cellWidth(calibration, config);
+        const height = cellHeight(calibration);
+        unknownGrids.forEach(({ column, row }) => {
+            fragment.appendChild(createSvgElement("rect", {
+                class: "isl-navdata-fog",
+                x: gridX(column, calibration, config),
+                y: gridY(row, calibration),
+                width,
+                height,
+                fill: `url(#${patternId})`
+            }));
+        });
+    }
+
+    function getNavDataFogPatternId(svg) {
+        if (!svg.dataset.navDataFogPatternId) {
+            navDataFogPatternSerial += 1;
+            svg.dataset.navDataFogPatternId = `isl-navdata-fog-${navDataFogPatternSerial}`;
+        }
+        return svg.dataset.navDataFogPatternId;
+    }
+
+    function createNavDataFogDefinitions(patternId) {
+        const definitions = createSvgElement("defs", {});
+        const pattern = createSvgElement("pattern", {
+            id: patternId,
+            width: 2.4,
+            height: 2.4,
+            patternUnits: "userSpaceOnUse"
+        });
+        pattern.append(
+            createSvgElement("rect", { width: 2.4, height: 2.4, fill: "#04090c" }),
+            createSvgElement("path", { d: "M0 0H2.4M0 1.2H2.4M0.6 0V2.4", stroke: "#123b43", "stroke-width": 0.08, opacity: 0.88 }),
+            createSvgElement("rect", { x: 1.5, y: 0.42, width: 0.5, height: 0.24, fill: "#1d5962", opacity: 0.8 }),
+            createSvgElement("rect", { x: 0.25, y: 1.66, width: 0.72, height: 0.18, fill: "#102d34", opacity: 0.92 })
+        );
+        definitions.appendChild(pattern);
+        return definitions;
     }
 
     function renderRestrictedMarker(fragment, entry, cell, calibration, config) {
