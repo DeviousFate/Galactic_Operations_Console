@@ -558,6 +558,7 @@
     let gridCoordinateRecords = [];
     let gridCoordinateByName = {};
     let gridCoordinateByGrid = {};
+    let gridNavDataByGrid = {};
     let gridRegionByGrid = {};
     let gridRegionCoordinates = [];
     let activeGridAlignmentEdit = null;
@@ -1410,9 +1411,17 @@
 
     function hasGridNavData(grid, navData = getNavData()) {
         const normalizedGrid = normalizeGrid(grid);
+        if (game.user?.isGM) return true;
+        if (!normalizedGrid) return false;
+
+        const gridNavData = gridNavDataByGrid[normalizedGrid] || {};
+        const gridRegion = navData.regions?.length ? getAstroNavGridRegion(normalizedGrid, "") : "";
         return normalizedGrid === normalizeGrid(getLiveState().shipGrid)
             || hasNavDataValue("grids", normalizedGrid, navData)
-            || hasNavDataValue("planets", gridCoordinateByGrid[normalizedGrid]?.fields?.Planet, navData);
+            || (gridNavData.planets || []).some((planet) => hasNavDataValue("planets", planet, navData))
+            || (gridNavData.sectors || []).some((sector) => hasNavDataValue("sectors", sector, navData))
+            || (gridNavData.regions || []).some((region) => hasNavDataValue("regions", region, navData))
+            || hasNavDataValue("regions", gridRegion, navData);
     }
 
     function hasAstroNavTargetData(target, navData = getNavData()) {
@@ -2622,6 +2631,25 @@
         }, {});
     }
 
+    function buildGridNavDataByGrid(records) {
+        const index = {};
+
+        records.forEach((record) => {
+            const grid = normalizeGrid(record.fields.Grid);
+            if (!grid) return;
+
+            const entry = index[grid] ??= { planets: [], sectors: [], regions: [] };
+            const planet = normalizeNavDataValue("planets", record.fields.Planet);
+            const sector = normalizeNavDataValue("sectors", record.fields.Sector);
+            const region = normalizeNavDataValue("regions", record.fields.Region);
+            if (planet && !entry.planets.includes(planet)) entry.planets.push(planet);
+            if (sector && !entry.sectors.includes(sector)) entry.sectors.push(sector);
+            if (region && !entry.regions.includes(region)) entry.regions.push(region);
+        });
+
+        return index;
+    }
+
     function buildGridRegionCoordinates(regionByGrid) {
         return Object.entries(regionByGrid).map(([grid, region]) => {
             const coordinate = parseAstroNavGrid(grid);
@@ -3614,12 +3642,22 @@
             if (grid && !records[grid]) records[grid] = record;
             return records;
         }, {});
+        gridNavDataByGrid = buildGridNavDataByGrid(gridCoordinateRecords);
         gridRegionByGrid = buildGridRegionByGrid(gridCoordinateRecords);
 
         Object.entries(GRID_COORDINATE_OVERRIDES).forEach(([name, fields]) => {
             gridCoordinateByName[name] = { fields };
             const grid = normalizeGrid(fields.Grid);
             if (grid) gridCoordinateByGrid[grid] = { fields };
+            if (grid) {
+                const entry = gridNavDataByGrid[grid] ??= { planets: [], sectors: [], regions: [] };
+                const planet = normalizeNavDataValue("planets", fields.Planet);
+                const sector = normalizeNavDataValue("sectors", fields.Sector);
+                const region = normalizeNavDataValue("regions", fields.Region);
+                if (planet && !entry.planets.includes(planet)) entry.planets.push(planet);
+                if (sector && !entry.sectors.includes(sector)) entry.sectors.push(sector);
+                if (region && !entry.regions.includes(region)) entry.regions.push(region);
+            }
             const region = normalizeHyperspaceRegion(fields.Region);
             if (grid && region) gridRegionByGrid[grid] = region;
         });
