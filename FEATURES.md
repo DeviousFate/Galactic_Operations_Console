@@ -92,7 +92,7 @@ This document records the features currently implemented in the Foundry VTT modu
 - Keeps the popup dimensions stable during the sequence.
 - Supplies a persistent vertical quick-access panel for Commlink, Mission Status, AstroNav, Target Intel, Ship Systems, and Transmissions.
 - GMs also receive direct ISB CONF access from the quick-access panel.
-- A client-side setting can hide the quick-access panel.
+- A host-controlled module setting can hide the quick-access panel for all users.
 
 ## Synchronization and Persistence
 

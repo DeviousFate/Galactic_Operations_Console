@@ -7262,8 +7262,8 @@
 
         game.settings.register(MODULE_ID, QUICK_ACCESS_HIDDEN_SETTING_KEY, {
             name: "Hide Quick Access Panel",
-            hint: "Hide the persistent Galactic Operations quick-access toolbar for this client.",
-            scope: "client",
+            hint: "Hide the persistent Galactic Operations quick-access toolbar for all users. This is a host-controlled visual restriction.",
+            scope: "world",
             config: true,
             type: Boolean,
             default: false,
